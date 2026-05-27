@@ -1,0 +1,2687 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>RobloMarket - Скупка предметов Roblox</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body.dark {
+            --bg: #0a0a0a;
+            --card-bg: #1a1a1a;
+            --header-bg: #0f0f0f;
+            --tab-bar: #0f0f0f;
+            --input-bg: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --success: #2e7d32;
+            --error: #d32f2f;
+            --warning: #ff9800;
+            --primary: #4caf50;
+            --primary-dark: #388e3c;
+            --border: #2a2a2a;
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --gradient-start: #4caf50;
+            --gradient-end: #2e7d32;
+        }
+
+        body.light {
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --header-bg: #ffffff;
+            --tab-bar: #ffffff;
+            --input-bg: #f0f2f5;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666666;
+            --success: #2e7d32;
+            --error: #d32f2f;
+            --warning: #ff9800;
+            --primary: #4caf50;
+            --primary-dark: #388e3c;
+            --border: #e0e0e0;
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --gradient-start: #4caf50;
+            --gradient-end: #2e7d32;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: var(--bg);
+            padding-bottom: 85px;
+        }
+
+        /* Верхняя плашка статична, её нельзя двигать/выделять */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            z-index: 1000;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .logo-icon img {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        
+        .theme-toggle {
+            background: var(--input-bg);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+        
+        .chat-icon-btn {
+            background: var(--input-bg);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Улучшенный круглый индикатор уведомлений */
+        .unread-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--error);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            box-shadow: 0 2px 6px rgba(211,47,47,0.4);
+        }
+        
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        /* Фиксированная плашка меню, которая не уходит наверх */
+        .user-menu {
+            position: fixed;
+            top: 65px;
+            right: calc(50% - 280px);
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            z-index: 2000;
+            min-width: 190px;
+            box-shadow: var(--shadow);
+        }
+        
+        @media (max-width: 600px) {
+            .user-menu {
+                right: 16px;
+            }
+        }
+        
+        .user-menu button {
+            width: 100%;
+            padding: 14px 18px;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .user-menu button:hover {
+            background: var(--input-bg);
+        }
+        
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 12px 14px;
+            z-index: 1000;
+            overflow-x: auto;
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 30px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+        
+        .tab-btn.active {
+            color: var(--primary);
+            background: rgba(76, 175, 80, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .tab-icon {
+            font-size: 22px;
+        }
+        
+        /* Смещение контента из-за fixed шапки */
+        .content {
+            padding: 16px;
+            margin-top: 68px;
+        }
+        
+        .mode-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .mode-tab {
+            padding: 8px 16px;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 30px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+        
+        .mode-tab.active {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            box-shadow: var(--shadow);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            color: var(--text-primary);
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+        
+        .product-card.selectable {
+            cursor: pointer;
+        }
+        
+        .product-card.selectable.selected {
+            border-color: var(--success);
+            transform: scale(1.02);
+        }
+        
+        .product-image {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 10px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .product-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        
+        .product-quantity {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .check-mark {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 22px;
+            height: 22px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .tab-bar button {
+            user-select: none;
+        }
+
+        .floating-bar {
+            position: fixed;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 90%;
+            width: auto;
+            min-width: 300px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 50px;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 99;
+            box-shadow: 0 6px 25px rgba(76, 175, 80, 0.5);
+        }
+        
+        .floating-info {
+            font-weight: bold;
+            font-size: 15px;
+            color: white;
+        }
+        
+        .floating-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 28px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+        }
+        
+        .stats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            flex: 1;
+            min-width: 100px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--success);
+            margin-bottom: 6px;
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+        
+        .exchange-rate {
+            background: var(--input-bg);
+            border-radius: 30px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .page-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+        }
+        
+        .balance-amount {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .history-date {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        .frozen-card {
+            background: var(--input-bg);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .message-out {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-in {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-time {
+            font-size: 9px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .chat-send-btn {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+        
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .chat-info {
+            flex: 1;
+        }
+        
+        .chat-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .chat-last-message {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .quantity-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        
+        .scup-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .scup-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .scup-badge {
+            background: var(--success);
+            border-radius: 20px;
+            padding: 4px 8px;
+            font-size: 10px;
+            color: white;
+        }
+        
+        .scup-badge-verified {
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            border-radius: 20px;
+            padding: 4px 8px;
+            font-size: 10px;
+            color: white;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .stat-card-big {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-value-big {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--success);
+        }
+        
+        .stat-label-big {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            margin: 16px 0;
+            border: 1px solid var(--border);
+            height: 220px;
+            position: relative;
+        }
+        
+        .cookie-display {
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+        
+        .purchase-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+            color: var(--text-primary);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .withdraw-request {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .withdraw-request-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .status-pending {
+            color: var(--warning);
+        }
+        
+        .status-completed {
+            color: var(--success);
+        }
+        
+        .price-edit-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .price-edit-row input {
+            width: 80px;
+            padding: 6px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        
+        .price-edit-row button {
+            width: auto;
+            padding: 6px 12px;
+            margin-left: 8px;
+        }
+        
+        .lot-items-list {
+            margin: 8px 0;
+            padding-left: 14px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        /* Контекстное меню для зажатия */
+        .longpress-menu {
+            position: fixed;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 6px 0;
+            z-index: 9999;
+            min-width: 150px;
+        }
+        .longpress-menu button {
+            width: 100%;
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            color: var(--error);
+            font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .longpress-menu button:hover {
+            background: var(--input-bg);
+        }
+        .press-holding {
+            transform: scale(0.97);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body class="dark">
+    <div class="app">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="https://cdn-icons-png.flaticon.com/512/5969/5969320.png" alt="Roblox">
+                </div>
+                <h1>RobloMarket</h1>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <button class="chat-icon-btn" id="chatBtn">
+                    <span class="chat-icon">💬</span>
+                    <span class="unread-badge hidden" id="unreadBadge">0</span>
+                </button>
+                <div class="avatar" id="avatarBtn">👤</div>
+            </div>
+        </div>
+        
+        <div class="user-menu hidden" id="userMenu">
+            <button id="profileBtn">👤 ПРОФИЛЬ</button>
+            <button id="financesBtn">💰 ФИНАНСЫ</button>
+            <button id="supportBtn">🆘 ТЕХПОДДЕРЖКА</button>
+            <button id="logoutBtn">🚪 ВЫЙТИ</button>
+        </div>
+        
+        <div class="content" id="content">
+            <div class="loading">Загрузка...</div>
+        </div>
+        
+        <div class="tab-bar" id="tabBar"></div>
+        
+        <div class="floating-bar hidden" id="floatingBar">
+            <span class="floating-info" id="floatingInfo">Выбрано: 0 товаров</span>
+            <button class="floating-btn" id="floatingBtn">ПРОДОЛЖИТЬ</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIG ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUmYcoaSQw7Z4uPJIrruoFDdJpJIToOnys",
+            authDomain: "roblomaret.firebaseapp.com",
+            projectId: "roblomaret",
+            storageBucket: "roblomaret.firebasestorage.app",
+            messagingSenderId: "109211980148",
+            appId: "1:109211980148:web:3b515d53de8ac706535c21"
+        };
+        
+        let db;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log("✅ Firebase подключен");
+        } catch (e) {
+            console.error("❌ Ошибка Firebase:", e);
+        }
+        
+        function initTheme() {
+            const saved = localStorage.getItem('roblomarket_theme') || 'dark';
+            document.body.className = saved;
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+        }
+        
+        function toggleTheme() {
+            const isDark = document.body.classList.contains('dark');
+            const newTheme = isDark ? 'light' : 'dark';
+            document.body.className = newTheme;
+            localStorage.setItem('roblomarket_theme', newTheme);
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+        }
+        
+        const tg = window.Telegram?.WebApp;
+        let currentUser = null;
+        let currentTab = 'home';
+        let sellSelectedProducts = [];
+        let currentMode = 'all';
+        let searchQuery = '';
+        let exchangeRate = 75;
+        let isScup = false;
+        let isTrustedScup = false;
+        let isAdmin = false;
+        let sellOrders = [];
+        let purchaseOrders = [];
+        let balance = 0;
+        let frozenBalance = 0;
+        let withdrawals = [];
+        let scupsList = [];
+        let incomeStats = { day: 0, week: 0, month: 0, year: 0, allTime: 0, dailyData: [0,0,0,0,0,0,0], monthlyData: [0,0,0,0,0,0,0,0,0,0,0,0] };
+        
+        // Хранилища для инстансов диаграмм, чтобы они правильно перерисовывались
+        let financeDailyChartObj = null;
+        let financeMonthlyChartObj = null;
+        let adminDailyChartObj = null;
+        let adminMonthlyChartObj = null;
+
+        const ADMINS_LIST = ['kllyourself', 'petasishr', 'admin'];
+
+        // ==================== ITEMS ====================
+        // ВСЕМ предметам добавлены полноценные фотографии/иконки
+        let allProducts = [
+            { id: 1, name: "Divalo (Requiem)", priceUsd: 40, mode: "anime", image: "https://i.postimg.cc/zLybVf3H/image.jpg" },
+            { id: 2, name: "Shiny Divalo (Requiem)", priceUsd: 400, mode: "anime", image: "https://i.postimg.cc/ZWjpG5q0/image.jpg" },
+            { id: 3, name: "Rogita (Super 4)", priceUsd: 0.67, mode: "anime", image: "https://i.postimg.cc/Y4ZG7GBc/image.jpg" },
+            { id: 4, name: "Shiny Koguro (Unsealed)", priceUsd: 16, mode: "anime", image: "https://i.postimg.cc/5jwYc27W/image.jpg" },
+            { id: 5, name: "Koguro (Unsealed)", priceUsd: 1, mode: "anime", image: "https://i.postimg.cc/LJsnZBH6/image.jpg" },
+            { id: 6, name: "Shiny Rogita (Super 4)", priceUsd: 8, mode: "anime", image: "https://i.postimg.cc/v1JBjJ54/image.jpg" },
+            { id: 7, name: "Iscanur (Pride)", priceUsd: 0.67, mode: "anime", image: "https://i.postimg.cc/XX0KBhmT/image.jpg" },
+            { id: 8, name: "Shiny Iscanur (Pride)", priceUsd: 6.67, mode: "anime", image: "https://i.postimg.cc/XX0KBhmT/image.jpg" },
+            { id: 9, name: "Serialized Ice Queen", priceUsd: 6.67, mode: "anime", image: "https://i.postimg.cc/6yWdYZWN/image.jpg" },
+            { id: 10, name: "Shiny Teacher", priceUsd: 6.67, mode: "anime", image: "https://i.postimg.cc/hJdxfbrB/image.jpg" },
+            { id: 11, name: "Horsegirls (Racers)", priceUsd: 0.6, mode: "anime", image: "https://i.postimg.cc/bZGSBH42/image.jpg" },
+            { id: 12, name: "Shiny Horsegirls", priceUsd: 8, mode: "anime", image: "https://i.postimg.cc/bZGSBH42/image.jpg" },
+            { id: 13, name: "Shiny Armored Mage", priceUsd: 6.67, mode: "anime", image: "https://i.postimg.cc/t7STGn3N/image.jpg" },
+            { id: 14, name: "Shiny Monkey King", priceUsd: 6, mode: "anime", image: "https://i.postimg.cc/QHvdHLn1/image.jpg" },
+            { id: 15, name: "Lich King (Ruler)", priceUsd: 1.33, mode: "anime", image: "https://i.postimg.cc/w1K99X7N/image.jpg" },
+            { id: 16, name: "Shiny Lich King", priceUsd: 8, mode: "anime", image: "https://i.postimg.cc/LY0Mwfcv/image.jpg" },
+            { id: 17, name: "Serialized Lich King", priceUsd: 267, mode: "anime", image: "https://i.postimg.cc/9RKFKPBG/image.jpg" },
+            { id: 18, name: "Shiny Conqueror vs Invulnerable", priceUsd: 10.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153127-099.YdHpL7" },
+            { id: 19, name: "Shiny Soburo (Contract)", priceUsd: 46.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153130-394.YdHxyB" },
+            { id: 20, name: "Shiny Clatakiri (Mochi)", priceUsd: 6.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153133-713.YdHu6t" },
+            { id: 21, name: "Shiny Choy Jong En", priceUsd: 4, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153137-161.YdHcpE" },
+            { id: 22, name: "Shiny Isdead (Romantic)", priceUsd: 18.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153140-848.YdHnm4" },
+            { id: 23, name: "Shiny Friran (Teacher)", priceUsd: 18.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153143-952.YdHoqo" },
+            { id: 24, name: "Octopus", priceUsd: 10.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153147-347.YdH2Bl" },
+            { id: 25, name: "Shiny Octopus", priceUsd: 66.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153150-514.YdHSX0" },
+            { id: 26, name: "Shiny Saiko (Spirit Medium)", priceUsd: 13.33, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153153-735.YdHTLf" },
+            { id: 27, name: "Shiny Diogo (Alternate)", priceUsd: 16, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153157-188.YdH1nA" },
+            { id: 28, name: "Legendary Super Brolzi", priceUsd: 26.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153200-681.YdH78p" },
+            { id: 29, name: "Shiny Legendary Super Brolzi", priceUsd: 200, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153207-256.YdHGfQ" },
+            { id: 30, name: "Shiny Gazelle", priceUsd: 24, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153211-739.YdHmrJ" },
+            { id: 31, name: "Serialized God", priceUsd: 8, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153218-544.YdHxxM" },
+            { id: 32, name: "Seban", priceUsd: 8, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153221-963.YdH5qN" },
+            { id: 33, name: "Shiny Seban", priceUsd: 40, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153225-295.YdH6XX" },
+            { id: 34, name: "Blade Ball RAP", priceUsd: 0.0017, mode: "blade", image: "https://cdn-icons-png.flaticon.com/512/3426/3426189.png" },
+            { id: 35, name: "Blade Ball Tokens", priceUsd: 0.0019, mode: "blade", image: "https://cdn-icons-png.flaticon.com/512/3231/3231730.png" },
+            { id: 36, name: "Pet Simulator 99 Gems (1B)", priceUsd: 0.87, mode: "pet", image: "https://cdn-icons-png.flaticon.com/512/3067/3067272.png" },
+            { id: 37, name: "Pet Simulator 99 RAP (1B)", priceUsd: 0.8, mode: "pet", image: "https://cdn-icons-png.flaticon.com/512/9355/9355707.png" },
+            { id: 38, name: "Anime Vanguards Gems", priceUsd: 0.67, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/616/616490.png" },
+            { id: 39, name: "Anime Vanguards RAP", priceUsd: 0.6, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/1705/1705354.png" },
+            { id: 40, name: "Anime Vanguards Tokens", priceUsd: 0.0016, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/4211/4211151.png" },
+            { id: 41, name: "Anime Vanguards Legendary", priceUsd: 2, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/10303/10303453.png" }
+        ];
+        
+        function loadProductPrices() {
+            const saved = localStorage.getItem('roblomarket_product_prices');
+            if (saved) {
+                const prices = JSON.parse(saved);
+                prices.forEach(p => {
+                    const product = allProducts.find(prod => prod.id === p.id);
+                    if (product) product.priceUsd = p.priceUsd;
+                });
+            }
+        }
+        
+        function saveProductPrices() {
+            const prices = allProducts.map(p => ({ id: p.id, priceUsd: p.priceUsd }));
+            localStorage.setItem('roblomarket_product_prices', JSON.stringify(prices));
+        }
+        
+        async function updateProductPrice(productId) {
+            if (!isAdmin) return;
+            const input = document.getElementById(`price_${productId}`);
+            if (!input) return;
+            const newPrice = parseFloat(input.value);
+            if (isNaN(newPrice) || newPrice <= 0) {
+                if (tg) tg.showAlert('❌ Введите корректную цену');
+                return;
+            }
+            const productIndex = allProducts.findIndex(p => p.id === productId);
+            if (productIndex !== -1) {
+                allProducts[productIndex].priceUsd = newPrice;
+                saveProductPrices();
+                if (tg) tg.showAlert(`✅ Цена ${allProducts[productIndex].name} обновлена: $${newPrice.toFixed(2)}`);
+                renderModerka();
+            }
+        }
+        
+        const modes = [
+            { id: 'all', name: 'Все', icon: '📱' },
+            { id: 'blade', name: 'Blade Ball', icon: '⚔️' },
+            { id: 'pet', name: 'Pet Simulator 99', icon: '🐾' },
+            { id: 'anime', name: 'Anime Vanguards', icon: '🎌' }
+        ];
+        
+        function getCommissionRate() {
+            if (isAdmin) return 0;
+            if (isTrustedScup) return 0.06;
+            if (isScup) return 0.07;
+            return 0.07;
+        }
+
+        // ==================== ЛОГИКА ЗАЖАТИЯ (LONG PRESS) ====================
+        function initLongPress(element, callback) {
+            let pressTimer;
+            
+            const start = (e) => {
+                if (e.type === 'click' && e.button !== 0) return;
+                element.classList.add('press-holding');
+                pressTimer = setTimeout(() => {
+                    cancel();
+                    callback(e);
+                }, 800);
+            };
+
+            const cancel = () => {
+                clearTimeout(pressTimer);
+                element.classList.remove('press-holding');
+            };
+
+            element.addEventListener('mousedown', start);
+            element.addEventListener('touchstart', start, { passive: true });
+            element.addEventListener('click', cancel);
+            element.addEventListener('mouseout', cancel);
+            element.addEventListener('touchend', cancel);
+            element.addEventListener('touchcancel', cancel);
+        }
+
+        function showContextMenu(e, actionName, actionCallback) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const oldMenu = document.querySelector('.longpress-menu');
+            if (oldMenu) oldMenu.remove();
+
+            const menu = document.createElement('div');
+            menu.className = 'longpress-menu';
+            
+            const btn = document.createElement('button');
+            btn.innerHTML = actionName;
+            btn.onclick = (event) => {
+                event.stopPropagation();
+                actionCallback();
+                menu.remove();
+            };
+            
+            menu.appendChild(btn);
+            document.body.appendChild(menu);
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            menu.style.left = `${Math.min(clientX, window.innerWidth - 160)}px`;
+            menu.style.top = `${Math.min(clientY, window.innerHeight - 60)}px`;
+
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu() {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                });
+            }, 10);
+        }
+
+        // ==================== ФУНКЦИИ УДАЛЕНИЯ ПО ЗАЖАТИЮ ====================
+        async function deleteChat(chatId) {
+            if (!db) return;
+            if (confirm('Вы уверены, что хотите удалить этот чат?')) {
+                try {
+                    await db.collection('chats').doc(chatId).delete();
+                    if (tg) tg.showAlert('✅ Чат успешно удален');
+                    renderChatList();
+                    updateUnreadChatsBadge();
+                } catch (e) {
+                    console.error("Ошибка удаления чата:", e);
+                }
+            }
+        }
+
+        async function deleteOldPurchase(purchaseId) {
+            if (!db) return;
+            if (confirm('Удалить эту завершенную покупку из вашей истории холдов?')) {
+                try {
+                    await db.collection('purchases').doc(purchaseId).delete();
+                    if (tg) tg.showAlert('✅ Запись удалена');
+                    // Перезагружаем данные и вкладку
+                    const purchasesSnapshot = await db.collection('purchases').where('buyerId', '==', currentUser.id.toString()).get();
+                    purchaseOrders = [];
+                    purchasesSnapshot.forEach(doc => purchaseOrders.push({ id: doc.id, ...doc.data() }));
+                    renderMyPurchases();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        async function deleteMySale(orderId, status) {
+            if (!db) return;
+            let msg = status === 'sold' ? 'Удалить запись о проданном лоте из истории?' : 'Вы действительно хотите удалить этот активный лот?';
+            if (confirm(msg)) {
+                try {
+                    await db.collection('orders').doc(orderId).delete();
+                    if (tg) tg.showAlert('✅ Удалено');
+                    const ordersSnapshot = await db.collection('orders').where('sellerId', '==', currentUser.id.toString()).get();
+                    sellOrders = [];
+                    ordersSnapshot.forEach(doc => sellOrders.push({ id: doc.id, ...doc.data() }));
+                    renderMySales();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        // Подсчет и динамическое суммирование активных чатов на иконке
+        async function updateUnreadChatsBadge() {
+            if (!db || !currentUser) return;
+            try {
+                const snapshot = await db.collection('chats')
+                    .where('participants', 'array-contains', currentUser.id.toString())
+                    .get();
+                
+                let totalUnread = 0;
+                snapshot.forEach(doc => {
+                    if (doc.data().lastMessage) totalUnread += 1; 
+                });
+
+                const badge = document.getElementById('unreadBadge');
+                if (badge) {
+                    if (totalUnread > 0) {
+                        badge.textContent = totalUnread;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ==================== FIREBASE DATA ====================
+        async function loadUserData() {
+            if (!currentUser || !db) return;
+            try {
+                const userRef = db.collection('users').doc(currentUser.id.toString());
+                const doc = await userRef.get();
+                const isNameInAdminList = ADMINS_LIST.includes(currentUser.username?.toLowerCase());
+                if (doc.exists) {
+                    const data = doc.data();
+                    balance = data.balance || 0;
+                    frozenBalance = data.frozenBalance || 0;
+                    isScup = data.isScup || false;
+                    isTrustedScup = data.isTrustedScup || false;
+                    isAdmin = data.isAdmin || isNameInAdminList;
+                } else {
+                    await userRef.set({
+                        balance: 5000,
+                        frozenBalance: 0,
+                        isScup: false,
+                        isTrustedScup: false,
+                        isAdmin: isNameInAdminList,
+                        username: currentUser.username || '',
+                        createdAt: new Date().toISOString()
+                    });
+                    balance = 5000;
+                    frozenBalance = 0;
+                    isAdmin = isNameInAdminList;
+                }
+            } catch (e) {
+                console.error("Ошибка загрузки пользователя:", e);
+            }
+            try {
+                const ordersSnapshot = await db.collection('orders').get();
+                sellOrders = [];
+                ordersSnapshot.forEach(doc => {
+                    sellOrders.push({ id: doc.id, ...doc.data() });
+                });
+            } catch (e) { console.error(e); }
+            try {
+                const purchasesSnapshot = await db.collection('purchases').where('buyerId', '==', currentUser.id.toString()).get();
+                purchaseOrders = [];
+                purchasesSnapshot.forEach(doc => purchaseOrders.push({ id: doc.id, ...doc.data() }));
+            } catch (e) { console.error(e); }
+            try {
+                const withdrawSnapshot = await db.collection('withdrawals').where('userId', '==', currentUser.id.toString()).get();
+                withdrawals = [];
+                withdrawSnapshot.forEach(doc => withdrawals.push(doc.data()));
+            } catch (e) { console.error(e); }
+            try {
+                const scupsSnapshot = await db.collection('users').where('isScup', '==', true).get();
+                scupsList = [];
+                scupsSnapshot.forEach(doc => scupsList.push(doc.data()));
+                const trustedSnapshot = await db.collection('users').where('isTrustedScup', '==', true).get();
+                trustedSnapshot.forEach(doc => {
+                    if (!scupsList.some(s => s.username === doc.data().username)) {
+                        scupsList.push(doc.data());
+                    }
+                });
+            } catch (e) { console.error(e); }
+            try {
+                const statsDoc = await db.collection('stats').doc('income').get();
+                if (statsDoc.exists) {
+                    incomeStats = { ...incomeStats, ...statsDoc.data() };
+                }
+            } catch (e) { console.error(e); }
+            
+            updateUnreadChatsBadge();
+        }
+        
+        async function saveUserData() {
+            if (!currentUser || !db) return;
+            try {
+                await db.collection('users').doc(currentUser.id.toString()).update({
+                    balance: balance,
+                    frozenBalance: frozenBalance
+                });
+            } catch (e) { console.error(e); }
+        }
+        
+        async function addHistory(type, amount, status, details) {
+            if (!currentUser || !db) return;
+            try {
+                await db.collection('transactions').add({
+                    userId: currentUser.id.toString(),
+                    type,
+                    amount,
+                    status,
+                    details,
+                    date: new Date().toISOString()
+                });
+            } catch (e) { console.error(e); }
+        }
+        
+        async function addIncome(amount) {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const month = now.getMonth();
+            incomeStats.allTime += amount;
+            incomeStats.year += amount;
+            incomeStats.month += amount;
+            incomeStats.week += amount;
+            incomeStats.day += amount;
+            if(!incomeStats.dailyData) incomeStats.dailyData = [0,0,0,0,0,0,0];
+            if(!incomeStats.monthlyData) incomeStats.monthlyData = [0,0,0,0,0,0,0,0,0,0,0,0];
+            incomeStats.dailyData[dayOfWeek] += amount;
+            incomeStats.monthlyData[month] += amount;
+            if (db) {
+                try {
+                    const statsRef = db.collection('stats').doc('income');
+                    await statsRef.set(incomeStats, { merge: true });
+                } catch (e) { console.error(e); }
+            }
+        }
+        
+        // ==================== CRYPTOBOT INTEGRATION ====================
+        async function createCryptoBotInvoice(amount, description) {
+            console.log("Пытаюсь создать инвойс через API на Render...");
+            try {
+                const response = await fetch('https://roblomarket-backend32.onrender.com/api/create-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, userId: currentUser ? currentUser.id.toString() : null })
+                });
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error("Сервер вернул ошибку:", response.status, errText);
+                    if (tg) tg.showAlert(`❌ Ошибка сервера Render (${response.status}): ${errText.substring(0, 50)}`);
+                    return null;
+                }
+                const data = await response.json();
+                if (data.ok && data.payLink) {
+                    if (window.Telegram?.WebApp) {
+                        if (data.payLink.includes('t.me/')) {
+                            window.Telegram.WebApp.openTelegramLink(data.payLink);
+                        } else {
+                            window.Telegram.WebApp.openLink(data.payLink);
+                        }
+                    } else {
+                        window.open(data.payLink, '_blank');
+                    }
+                    return data;
+                } else {
+                    if (tg) tg.showAlert(`❌ Ответ бэкенда не содержит payLink: ${JSON.stringify(data)}`);
+                }
+                return null;
+            } catch (error) {
+                console.error("Ошибка создания счета через API Render:", error);
+                if (tg) tg.showAlert(`❌ Критическая ошибка fetch: ${error.message}`);
+                return null;
+            }
+        }
+        
+        async function checkInvoiceStatus() {
+            if (!currentUser) return;
+            if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
+            try {
+                const response = await fetch(`https://roblomarket-backend32.onrender.com/api/check-payment?userId=${currentUser.id}`);
+                const data = await response.json();
+                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
+                if (data.success) {
+                    if (tg) tg.showAlert(`🎉 Баланс успешно пополнен на ${data.receivedRub.toFixed(2)} рублей!`);
+                    await loadUserData();
+                    if (currentTab === 'finances') renderFinances();
+                } else {
+                    if (tg) tg.showAlert(data.message || 'Новых оплаченных счетов не найдено.');
+                }
+            } catch (e) {
+                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
+                console.error(e);
+                if (tg) tg.showAlert('Ошибка проверки платежа.');
+            }
+        }
+
+        // ==================== CHAT SYSTEM ====================
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        async function createOrGetChat(targetUserId, targetUserName) {
+            if (!currentUser || !db) return null;
+            const myId = currentUser.id.toString();
+            const theirId = targetUserId.toString();
+            if (myId === theirId) return null;
+            try {
+                const q1 = await db.collection('chats').where('participants', '==', [myId, theirId]).get();
+                if (!q1.empty) return q1.docs[0].id;
+                const q2 = await db.collection('chats').where('participants', '==', [theirId, myId]).get();
+                if (!q2.empty) return q2.docs[0].id;
+                
+                const newChatRef = db.collection('chats').doc();
+                const chatId = newChatRef.id;
+                await newChatRef.set({
+                    participants: [myId, theirId],
+                    participantsNames: [currentUser.username || 'User', targetUserName || 'User'],
+                    lastMessage: '',
+                    lastMessageTime: new Date().toISOString()
+                });
+                return chatId;
+            } catch (e) {
+                console.error(e);
+                return null;
+            }
+        }
+        
+        async function sendMessage(chatId, text) {
+            if (!currentUser || !db || !text.trim()) return;
+            try {
+                const message = {
+                    userId: currentUser.id.toString(),
+                    userName: currentUser.username,
+                    text: text.trim(),
+                    time: new Date().toISOString()
+                };
+                await db.collection('chats').doc(chatId).collection('messages').add(message);
+                await db.collection('chats').doc(chatId).update({
+                    lastMessage: text.trim(),
+                    lastMessageTime: new Date().toISOString()
+                });
+            } catch (e) { console.error(e); }
+        }
+        
+        async function loadMessages(chatId, container) {
+            if (!db) return;
+            try {
+                const messagesSnapshot = await db.collection('chats').doc(chatId).collection('messages').orderBy('time').get();
+                container.innerHTML = '';
+                messagesSnapshot.forEach(doc => {
+                    const msg = doc.data();
+                    const isOut = msg.userId === currentUser.id.toString();
+                    const div = document.createElement('div');
+                    div.className = `message ${isOut ? 'message-out' : 'message-in'}`;
+                    div.innerHTML = `<div>${escapeHtml(msg.text)}</div><div class="message-time">${new Date(msg.time).toLocaleTimeString()}</div>`;
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            } catch (e) { console.error(e); }
+        }
+        
+        async function renderChatList() {
+            if (!db || !currentUser) return;
+            try {
+                const chatsSnapshot = await db.collection('chats').where('participants', 'array-contains', currentUser.id.toString()).get();
+                const chats = [];
+                chatsSnapshot.forEach(doc => {
+                    chats.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (chats.length === 0) {
+                    document.getElementById('content').innerHTML = `<div class="page-title">ЧАТЫ</div><div class="empty-state"><div style="font-size:48px">💬</div><div>Нет active-ных чатов</div></div>`;
+                    return;
+                }
+                
+                document.getElementById('content').innerHTML = `<div class="page-title">ЧАТЫ</div><div class="page-subtitle">Ваши диалоги (зажмите чат для удаления)</div><div id="chatsList"></div>`;
+                const container = document.getElementById('chatsList');
+                
+                container.innerHTML = chats.map(chat => {
+                    const otherName = chat.participantsNames.find(n => n !== currentUser.username) || 'Собеседник';
+                    return `<div class="chat-item" data-id="${chat.id}" id="chat_item_${chat.id}">
+                        <div class="chat-avatar">👤</div>
+                        <div class="chat-info">
+                            <div class="chat-name">@${escapeHtml(otherName)}</div>
+                            <div class="chat-last-message">${escapeHtml(chat.lastMessage) || 'Нет сообщений'}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                // Вешаем обработчики зажатия и обычного клика
+                chats.forEach(chat => {
+                    const el = document.getElementById(`chat_item_${chat.id}`);
+                    if (el) {
+                        initLongPress(el, (e) => {
+                            const otherName = chat.participantsNames.find(n => n !== currentUser.username) || 'Собеседник';
+                            showContextMenu(e, `❌ Удалить чат с @${otherName}`, () => deleteChat(chat.id));
+                        });
+                        el.addEventListener('click', (e) => {
+                            if (!el.classList.contains('press-holding')) {
+                                const otherName = chat.participantsNames.find(n => n !== currentUser.username) || 'Собеседник';
+                                openChat(chat.id, otherName);
+                            }
+                        });
+                    }
+                });
+                
+            } catch (e) { console.error(e); }
+        }
+        
+        function openChat(chatId, targetTitle) {
+            document.getElementById('content').innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                    <button class="btn" style="width:auto;padding:8px 16px" onclick="renderChatList()">⬅️ Назад</button>
+                    <div style="font-weight:bold;font-size:18px">@${escapeHtml(targetTitle)}</div>
+                </div>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">Загрузка сообщений...</div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Введите сообщение...">
+                        <button class="chat-send-btn" id="chatSendBtn">🚀</button>
+                    </div>
+                </div>
+            `;
+            const msgContainer = document.getElementById('chatMessages');
+            loadMessages(chatId, msgContainer);
+            
+            const interval = setInterval(() => {
+                if (document.getElementById('chatMessages')) {
+                    loadMessages(chatId, document.getElementById('chatMessages'));
+                } else {
+                    clearInterval(interval);
+                }
+            }, 3000);
+            
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('chatSendBtn');
+            
+            const doSend = async () => {
+                const txt = input.value;
+                if(!txt.trim()) return;
+                input.value = '';
+                await sendMessage(chatId, txt);
+                loadMessages(chatId, msgContainer);
+            };
+            
+            sendBtn.onclick = doSend;
+            input.onkeydown = (e) => { if(e.key === 'Enter') doSend(); };
+        }
+
+        // ==================== SUPPORT SYSTEM ====================
+        async function sendSupportRequest() {
+            const txt = document.getElementById('supportText')?.value;
+            if (!txt || !txt.trim() || !db || !currentUser) return;
+            document.getElementById('supportText').value = '';
+            try {
+                await db.collection('supportTickets').add({
+                    userId: currentUser.id.toString(),
+                    userName: currentUser.username || 'unknown',
+                    text: txt.trim(),
+                    status: 'open',
+                    createdAt: new Date().toISOString()
+                });
+                if (tg) tg.showAlert('✅ Обращение отправлено!');
+            } catch (e) { console.error(e); }
+        }
+        
+        async function openSupportTicketChat(userId, userName) {
+            if (!isAdmin) return;
+            const chatId = await createOrGetChat(userId, userName);
+            if (chatId) {
+                switchTab('chats');
+                openChat(chatId, userName);
+            }
+        }
+        
+        async function closeSupportTicket(ticketId) {
+            if (!isAdmin || !db) return;
+            try {
+                await db.collection('supportTickets').doc(ticketId).update({ status: 'closed' });
+                if (tg) tg.showAlert('✅ Тикет закрыт');
+                renderModerka();
+            } catch (e) { console.error(e); }
+        }
+
+        // ==================== FINANCIAL OPERATIONS ====================
+        async function deposit(amountUsd) {
+            if (!amountUsd || amountUsd < 1) {
+                if (tg) tg.showAlert('❌ Минимальная сумма: 1 USDT');
+                return false;
+            }
+            if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
+            const invoice = await createCryptoBotInvoice(amountUsd);
+            if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
+            if (!invoice) {
+                if (tg) tg.showAlert('❌ Не удалось создать счет. Проверьте настройки токена в Render.');
+            }
+        }
+        
+        async function requestWithdraw(amountUsd, targetTelegramId) {
+            if (!amountUsd || amountUsd < 10) {
+                if (tg) tg.showAlert('❌ Минимальная сумма: 10 USDT');
+                return;
+            }
+            const rubAmount = amountUsd * exchangeRate;
+            if (rubAmount > balance) {
+                if (tg) tg.showAlert('❌ Недостаточно средств');
+                return;
+            }
+            try {
+                balance -= rubAmount;
+                await saveUserData();
+                if (db) {
+                    await db.collection('withdrawals').add({
+                        userId: currentUser.id.toString(),
+                        userName: currentUser.username,
+                        amount: amountUsd,
+                        rubAmount: rubAmount,
+                        targetTelegramId: targetTelegramId,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    });
+                }
+                await addHistory('withdraw', rubAmount, 'pending', `Заявка на ручную выплату (${amountUsd} USDT) на TG ID: ${targetTelegramId}`);
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `<div class="modal-content">
+                    <h3>✅ Заявка создана!</h3>
+                    <p style="margin:12px 0; font-size:14px;">Ваша заявка на сумму <strong>$${amountUsd} USDT</strong> успешно отправлена администраторам. Выплата будет произведена вручную после проверки.</p>
+                    <button class="btn" onclick="closeModal(); switchTab('home');">ОТЛИЧНО</button>
+                </div>`;
+                document.body.appendChild(modal);
+            } catch (e) { console.error(e); }
+        }
+        
+        async function approveWithdrawal(wId) {
+            if (!isAdmin || !db) return;
+            try {
+                const ref = db.collection('withdrawals').doc(wId);
+                await ref.update({ status: 'completed' });
+                if (tg) tg.showAlert('✅ Выплата подтверждена!');
+                renderModerka();
+            } catch (e) {
+                console.error(e);
+                if (tg) tg.showAlert('❌ Ошибка при подтверждении');
+            }
+        }
+        
+        async function rejectWithdrawal(wId) {
+            if (!isAdmin || !db) return;
+            try {
+                const ref = db.collection('withdrawals').doc(wId);
+                const doc = await ref.get();
+                const wData = doc.data();
+                
+                const userRef = db.collection('users').doc(wData.userId);
+                const uDoc = await userRef.get();
+                const currentBal = uDoc.data().balance || 0;
+                
+                await db.runTransaction(async (transaction) => {
+                    transaction.update(userRef, { balance: currentBal + wData.rubAmount });
+                    transaction.update(ref, { status: 'rejected' });
+                });
+                
+                if (tg) tg.showAlert('❌ Выплата отклонена, средства возвращены');
+                renderModerka();
+            } catch (e) {
+                console.error(e);
+                if (tg) tg.showAlert('❌ Ошибка при отклонении');
+            }
+        }
+        
+        function updateFloatingBarGlobalState() {
+            const totalItems = sellSelectedProducts.reduce((sum, s) => sum + s.quantity, 0);
+            const floatingBar = document.getElementById('floatingBar');
+            if (!floatingBar) return;
+            if (totalItems > 0) {
+                floatingBar.classList.remove('hidden');
+                document.getElementById('floatingInfo').textContent = `Выбрано для лота: ${totalItems} шт`;
+                document.getElementById('floatingBtn').onclick = showPriceAndCookieModal;
+            } else {
+                floatingBar.classList.add('hidden');
+            }
+        }
+
+        // ==================== RENDERING TABS ====================
+        function renderHome() {
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">Добро пожаловать в RobloMarket!</div>
+                <div class="page-subtitle">Безопасный маркетплейс для покупки и продажи предметов Roblox</div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value">ПРОДАВАЙТЕ</div><div class="stat-label">Выставьте предметы с кукой</div></div>
+                    <div class="stat-card"><div class="stat-value">ПОКУПАЙТЕ</div><div class="stat-label">Скупайте предметы через CryptoBot</div></div>
+                    <div class="stat-card"><div class="stat-value">БЕЗОПАСНОСТЬ</div><div class="stat-label">Все сделки защищены</div></div>
+                </div>
+                <div class="exchange-rate" id="updateRateBtn">💱 Текущий курс: 1 USDT = <span id="exchangeRateValue">${exchangeRate.toFixed(2)}</span> RUB (нажмите для обновления)</div>
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow)">
+                    <div style="font-weight:bold; margin-bottom:12px">📘 Как это работает?</div>
+                    <div style="margin-bottom:12px"><div style="font-weight:bold">1. Продавец выставляет предметы</div><div style="font-size:12px; color:var(--text-secondary)">Выбирает один или несколько товаров, которые идут в один общий лот.</div></div>
+                    <div style="margin-bottom:12px"><div style="font-weight:bold">2. Скуп покупает лот (Холд)</div><div style="font-size:12px; color:var(--text-secondary)">Оплачивает балансом, средства замораживаются. Скуп проверяет куки.</div></div>
+                    <div><div style="font-weight:bold">3. Завершение или Отмена</div><div style="font-size:12px; color:var(--text-secondary)">После успешной проверки скуп нажимает "Confirm" и средства уходят продавцу. Если кука невалид - отмена.</div></div>
+                </div>
+            `;
+            
+            document.getElementById('updateRateBtn').onclick = async () => {
+                if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
+                try {
+                    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
+                    const data = await res.json();
+                    if(data.tether?.rub) {
+                        exchangeRate = data.tether.rub;
+                        document.getElementById('exchangeRateValue').textContent = exchangeRate.toFixed(2);
+                        if (tg) tg.showAlert(`✅ Курс обновлен: 1 USDT = ${exchangeRate.toFixed(2)} RUB`);
+                    }
+                } catch(e) {
+                    exchangeRate = 92.5; 
+                    document.getElementById('exchangeRateValue').textContent = exchangeRate.toFixed(2);
+                }
+                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
+            };
+        }
+        
+        function renderSell() {
+            let html = `
+                <div class="page-title">ПРОДАЖА ПРЕДМЕТОВ</div>
+                <div class="page-subtitle">Выберите количество предметов для формирования единого лота</div>
+                <div class="mode-tabs">
+                    ${modes.map(m => `<button class="mode-tab ${currentMode === m.id ? 'active' : ''}" onclick="setMode('${m.id}')">${m.icon} ${m.name}</button>`).join('')}
+                </div>
+                <input type="text" class="search-input" id="searchInputObj" placeholder="🔍 Поиск по названию предмета..." value="${escapeHtml(searchQuery)}">
+                <div class="products-grid">
+            `;
+            
+            let filtered = allProducts;
+            if (currentMode !== 'all') filtered = filtered.filter(p => p.mode === currentMode);
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+            }
+            
+            if(filtered.length === 0) {
+                html += `</div><div class="empty-state">Предметы не найдены</div>`;
+            } else {
+                html += filtered.map(p => {
+                    const selectedItem = sellSelectedProducts.find(s => s.id === p.id);
+                    const isSelected = !!selectedItem;
+                    const rubPrice = p.priceUsd * exchangeRate;
+                    return `
+                        <div class="product-card selectable ${isSelected ? 'selected' : ''}" onclick="openQuantityModal(${p.id})">
+                            ${isSelected ? `<div class="check-mark">✓</div>` : ''}
+                            <div class="product-image">
+                                <img src="${p.image || 'https://cdn-icons-png.flaticon.com/512/5969/5969320.png'}" alt="${escapeHtml(p.name)}">
+                            </div>
+                            <div class="product-name">${escapeHtml(p.name)}</div>
+                            <div style="font-size:13px; font-weight:700; color:var(--success)">$${p.priceUsd.toFixed(4)}</div>
+                            <div style="font-size:11px; color:var(--text-secondary)">~ ${rubPrice.toFixed(2)} ₽</div>
+                            ${isSelected ? `<div class="product-quantity">Выбрано: <strong>${selectedItem.quantity} шт</strong></div>` : ''}
+                        </div>
+                    `;
+                }).join('') + `</div>`;
+            }
+            
+            document.getElementById('content').innerHTML = html;
+            updateFloatingBarGlobalState();
+            
+            const sInput = document.getElementById('searchInputObj');
+            if (sInput) {
+                sInput.oninput = (e) => {
+                    searchQuery = e.target.value;
+                    let innerFiltered = allProducts;
+                    if (currentMode !== 'all') innerFiltered = innerFiltered.filter(p => p.mode === currentMode);
+                    if (searchQuery.trim()) {
+                        const q = searchQuery.toLowerCase();
+                        innerFiltered = innerFiltered.filter(p => p.name.toLowerCase().includes(q));
+                    }
+                    const grid = document.querySelector('.products-grid');
+                    if(grid) {
+                        grid.innerHTML = innerFiltered.map(p => {
+                            const selectedItem = sellSelectedProducts.find(s => s.id === p.id);
+                            const isSelected = !!selectedItem;
+                            const rubPrice = p.priceUsd * exchangeRate;
+                            return `
+                                <div class="product-card selectable ${isSelected ? 'selected' : ''}" onclick="openQuantityModal(${p.id})">
+                                    ${isSelected ? `<div class="check-mark">✓</div>` : ''}
+                                    <div class="product-image">
+                                        <img src="${p.image || 'https://cdn-icons-png.flaticon.com/512/5969/5969320.png'}" alt="${escapeHtml(p.name)}">
+                                    </div>
+                                    <div class="product-name">${escapeHtml(p.name)}</div>
+                                    <div style="font-size:13px; font-weight:700; color:var(--success)">$${p.priceUsd.toFixed(4)}</div>
+                                    <div style="font-size:11px; color:var(--text-secondary)">~ ${rubPrice.toFixed(2)} ₽</div>
+                                    ${isSelected ? `<div class="product-quantity">Выбрано: <strong>${selectedItem.quantity} шт</strong></div>` : ''}
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                };
+            }
+        }
+        
+        function openQuantityModal(productId) {
+            const currentQuantity = sellSelectedProducts.find(s => s.id === productId)?.quantity;
+            const product = allProducts.find(p => p.id === productId);
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `<div class="modal-content">
+                <h3 style="margin-bottom:16px">📦 ${escapeHtml(product.name)}</h3>
+                <div class="quantity-control">
+                    <button class="quantity-btn" onclick="changeQuantity(${productId}, -1)">−</button>
+                    <span class="quantity-value" id="qty_${productId}">${currentQuantity || 1}</span>
+                    <button class="quantity-btn" onclick="changeQuantity(${productId}, 1)">+</button>
+                </div>
+                <button class="btn btn-success" style="margin-bottom:8px;margin-top:16px" onclick="confirmSellQuantity(${productId})">✅ ПОДТВЕРДИТЬ</button>
+                <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
+            </div>`;
+            document.body.appendChild(modal);
+            
+            window.changeQuantity = (id, delta) => {
+                const qtySpan = document.getElementById(`qty_${id}`);
+                let newQty = parseInt(qtySpan.innerText) + delta;
+                if (newQty < 1) newQty = 1;
+                if (newQty > 999) newQty = 999;
+                qtySpan.innerText = newQty;
+            };
+            
+            window.confirmSellQuantity = (id) => {
+                const qty = parseInt(document.getElementById(`qty_${id}`).innerText);
+                const existingIndex = sellSelectedProducts.findIndex(s => s.id === id);
+                if (existingIndex !== -1) {
+                    if (qty > 0) sellSelectedProducts[existingIndex].quantity = qty;
+                    else sellSelectedProducts.splice(existingIndex, 1);
+                } else if (qty > 0) {
+                    sellSelectedProducts.push({ id, quantity: qty });
+                }
+                closeModal();
+                renderSell();
+            };
+        }
+        
+        function setMode(mode) {
+            currentMode = mode;
+            renderSell();
+        }
+        
+        function showPriceAndCookieModal() {
+            const items = [];
+            let totalUsd = 0;
+            for (let sel of sellSelectedProducts) {
+                const product = allProducts.find(p => p.id === sel.id);
+                if (product) {
+                    const itemTotal = product.priceUsd * sel.quantity;
+                    totalUsd += itemTotal;
+                    items.push({ id: product.id, name: product.name, quantity: sel.quantity, priceUsd: product.priceUsd, totalUsd: itemTotal });
+                }
+            }
+            const commissionRate = getCommissionRate();
+            const commission = totalUsd * commissionRate;
+            const finalPayoutUsd = totalUsd - commission;
+            const finalPayoutRub = finalPayoutUsd * exchangeRate;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:440px;">
+                    <h3>🚀 СОЗДАНИЕ ОБЩЕГО ЛОТА</h3>
+                    <div style="margin:12px 0; font-size:13px; background:var(--input-bg); padding:10px; border-radius:12px;">
+                        <strong>Состав лота:</strong><br>
+                        ${items.map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.totalUsd.toFixed(2)})`).join('<br>')}
+                    </div>
+                    <div style="font-size:14px; margin-bottom:12px;">
+                        Общая сумма: <strong>$${totalUsd.toFixed(2)}</strong><br>
+                        Комиссия системы: <strong>${(commissionRate*100).toFixed(0)}% (-$${commission.toFixed(2)})</strong><br>
+                        Вы получите после холда: <strong style="color:var(--success)">$${finalPayoutUsd.toFixed(2)} (~ ${finalPayoutRub.toFixed(0)} ₽)</strong>
+                    </div>
+                    <label style="font-size:12px; font-weight:bold;">Вставьте .ROBLOSECURITY куку:</label>
+                    <textarea id="cookieInput" class="search-input" style="height:80px; border-radius:12px; margin-top:4px; font-size:11px; padding:8px;" placeholder="_|WARNING:-DO-NOT-SHARE-THIS..."></textarea>
+                    <button class="btn btn-success" style="margin-bottom:8px;" onclick="publishSellOrder()">📢 ОПУБЛИКОВАТЬ ЛОТ</button>
+                    <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            window.publishSellOrder = async () => {
+                const cookieStr = document.getElementById('cookieInput').value;
+                if (!cookieStr || cookieStr.trim().length < 50) {
+                    if (tg) tg.showAlert('❌ Введите корректную .ROBLOSECURITY куку!');
+                    return;
+                }
+                if (!db || !currentUser) return;
+                
+                closeModal();
+                if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
+                try {
+                    const orderId = `LOT_${Date.now()}`;
+                    await db.collection('orders').doc(orderId).set({
+                        id: orderId,
+                        sellerId: currentUser.id.toString(),
+                        sellerName: currentUser.username || 'User',
+                        items: items,
+                        totalUsd: totalUsd,
+                        payoutUsd: finalPayoutUsd,
+                        commissionUsd: commission,
+                        cookie: cookieStr.trim(),
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    });
+                    sellSelectedProducts = [];
+                    if (tg) tg.showAlert('🎉 Лот успешно создан и доступен скупщикам!');
+                    await loadUserData();
+                    switchTab('mySales');
+                } catch(e) {
+                    console.error(e);
+                    if (tg) tg.showAlert('Ошибка сохранения лота');
+                }
+                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
+            };
+        }
+        
+        function renderMySales() {
+            const mySales = sellOrders.filter(item => item.sellerId === currentUser?.id.toString());
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">МОИ ПРОДАЖИ</div>
+                <div class="page-subtitle">Ваши лоты (зажмите лот для удаления/очистки истории)</div>
+                ${mySales.length === 0 ? '<div class="empty-state">У вас нет active-продаж</div>' : `
+                    <div class="products-grid" style="grid-template-columns:1fr;">
+                        ${mySales.map(item => `
+                            <div class="purchase-card" data-id="${item.id}" data-status="${item.status}" id="sale_card_${item.id}">
+                                <div style="font-weight:bold; color:var(--success)">Лот #${item.id ? (item.id.split('_')[1] || item.id) : '---'}</div>
+                                <div class="lot-items-list">
+                                    ${(item.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.priceUsd})`).join('<br>')}
+                                </div>
+                                <div style="margin:8px 0; font-size:14px;">Общая сумма лота: <strong>$${(item.totalUsd || 0).toFixed(2)} (~ ${((item.totalUsd || 0) * exchangeRate).toFixed(0)} ₽)</strong></div>
+                                <div style="font-size:11px;color:var(--text-secondary)">Статус: ${item.status === 'pending' ? '⏳ Ожидает скупа' : item.status === 'on_hold' ? '🔒 В удержании (проверяется)' : '✅ Продан'}</div>
+                                ${item.status === 'pending' ? `<button class="btn" style="margin-top:8px;padding:8px;background:var(--error)" onclick="cancelSale('${item.id}')">❌ ОТМЕНИТЬ ПРОДАЖУ</button>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+
+            // Подключение Long Press к картам продаж
+            mySales.forEach(item => {
+                const el = document.getElementById(`sale_card_${item.id}`);
+                if (el) {
+                    initLongPress(el, (e) => {
+                        showContextMenu(e, '❌ Удалить/Снять лот', () => deleteMySale(item.id, item.status));
+                    });
+                }
+            });
+        }
+        
+        async function cancelSale(orderId) {
+            if (db) {
+                try {
+                    await db.collection('orders').doc(orderId).delete();
+                    if (tg) tg.showAlert('❌ Объявление отменено');
+                    await loadUserData();
+                    renderMySales();
+                } catch(e) { console.error(e); }
+            }
+        }
+        
+        function renderScupka() {
+            if (!isScup && !isTrustedScup && !isAdmin) {
+                switchTab('home');
+                return;
+            }
+            const available = sellOrders.filter(item => item.sellerId !== currentUser?.id.toString() && item.status === 'pending');
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">СКУПКА</div>
+                <div class="page-subtitle">Доступные лоты для выкупа в холд</div>
+                ${available.length === 0 ? '<div class="empty-state">Нет доступных лотов для скупки</div>' : `
+                    <div class="products-grid" style="grid-template-columns:1fr;">
+                        ${available.map(item => {
+                            const totalWithCommission = item.totalUsd; 
+                            const rubAmount = totalWithCommission * exchangeRate;
+                            return `
+                                <div class="purchase-card" style="text-align:left">
+                                    <div style="font-weight:bold; font-size:15px; color:var(--primary);">📦 Лот #${item.id ? (item.id.split('_')[1] || item.id) : '---'}</div>
+                                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Продавец: @${escapeHtml(item.sellerName)}</div>
+                                    <div class="lot-items-list">
+                                        ${(item.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.priceUsd})`).join('<br>')}
+                                    </div>
+                                    <div style="margin-top:10px; font-size:15px;">К оплате: <strong style="color:var(--success)">${rubAmount.toFixed(0)} ₽ ($${totalWithCommission.toFixed(2)})</strong></div>
+                                    <button class="btn btn-success" style="margin-top:12px; padding:10px;" onclick="buyAsScup('${item.id}', ${rubAmount}, '${item.sellerId}', '${item.sellerName}')">🔒 ВЫКУПИТЬ В ХОЛД</button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `}
+            `;
+        }
+        
+        async function buyAsScup(orderId, rubAmount, sellerIdForChat, sellerNameForChat) {
+            if (!db || !currentUser) return;
+            if (balance < rubAmount) {
+                if (tg) tg.showAlert(`❌ Недостаточно средств на балансе! Требуется ${rubAmount.toFixed(0)} ₽, у вас ${balance.toFixed(0)} ₽`);
+                return;
+            }
+            if (!confirm(`Выкупить этот лот за ${rubAmount.toFixed(0)} ₽ в удержание (холд)?`)) return;
+            
+            try {
+                const orderRef = db.collection('orders').doc(orderId);
+                const buyerRef = db.collection('users').doc(currentUser.id.toString());
+                
+                await db.runTransaction(async (transaction) => {
+                    const orderDoc = await transaction.get(orderRef);
+                    const buyerDoc = await transaction.get(buyerRef);
+                    if (!orderDoc.exists || orderDoc.data().status !== 'pending') throw "Лот уже выкуплен или удален";
+                    
+                    const currentBalance = buyerDoc.data().balance || 0;
+                    const currentFrozen = buyerDoc.data().frozenBalance || 0;
+                    if (currentBalance < rubAmount) throw "Недостаточно средств";
+                    
+                    transaction.update(orderRef, { status: 'on_hold' });
+                    transaction.update(buyerRef, {
+                        balance: currentBalance - rubAmount,
+                        frozenBalance: currentFrozen + rubAmount
+                    });
+                    
+                    const purchaseId = `PCH_${Date.now()}`;
+                    const purchaseRef = db.collection('purchases').doc(purchaseId);
+                    
+                    transaction.set(purchaseRef, {
+                        id: purchaseId,
+                        orderId: orderId,
+                        items: orderDoc.data().items,
+                        totalUsd: orderDoc.data().totalUsd,
+                        rubAmount: rubAmount,
+                        cookie: orderDoc.data().cookie,
+                        sellerId: orderDoc.data().sellerId,
+                        seller: orderDoc.data().sellerName,
+                        buyerId: currentUser.id.toString(),
+                        buyerName: currentUser.username,
+                        status: 'on_hold',
+                        date: new Date().toISOString()
+                    });
+                });
+                
+                if (tg) tg.showAlert(`🔒 Лот выкуплен в удержание! Средства заморожены до вашей проверки.`);
+                if (sellerIdForChat && sellerNameForChat) {
+                    await createOrGetChat(sellerIdForChat, sellerNameForChat);
+                }
+                await loadUserData();
+                switchTab('myPurchases');
+            } catch (error) {
+                if (tg) tg.showAlert(`❌ Ошибка сделки: ${error}`);
+            }
+        }
+        
+        async function confirmEscrowPurchase(purchaseId) {
+            if (!db) return;
+            if (!confirm('Вы подтверждаете валидность куки лота? Деньги отправятся продавцу.')) return;
+            try {
+                const purchaseRef = db.collection('purchases').doc(purchaseId);
+                const purchaseDoc = await purchaseRef.get();
+                const pData = purchaseDoc.data();
+                const orderRef = db.collection('orders').doc(pData.orderId);
+                const orderDoc = await orderRef.get();
+                const oData = orderDoc.data();
+                const buyerRef = db.collection('users').doc(pData.buyerId);
+                const sellerRef = db.collection('users').doc(pData.sellerId);
+                
+                await db.runTransaction(async (transaction) => {
+                    const bDoc = await transaction.get(buyerRef);
+                    const sDoc = await transaction.get(sellerRef);
+                    const buyerFrozen = bDoc.data().frozenBalance || 0;
+                    const sellerBalance = sDoc.data().balance || 0;
+                    
+                    transaction.update(buyerRef, { frozenBalance: buyerFrozen - pData.rubAmount });
+                    const sellerPayoutRub = oData.payoutUsd * exchangeRate;
+                    transaction.update(sellerRef, { balance: sellerBalance + sellerPayoutRub });
+                    transaction.update(purchaseRef, { status: 'completed' });
+                    transaction.update(orderRef, { status: 'sold' });
+                });
+                
+                if (tg) tg.showAlert('✅ Сделка завершена! Средства переведены продавцу.');
+                await addIncome(oData.commissionUsd);
+                await loadUserData();
+                switchTab('myPurchases');
+            } catch (err) {
+                if (tg) tg.showAlert(`❌ Ошибка: ${err}`);
+            }
+        }
+        
+        async function cancelEscrowPurchase(purchaseId) {
+            if (!db) return;
+            if (!confirm('Вы действительно хотите отменить покупку лота и вернуть средства на баланс?')) return;
+            try {
+                const purchaseRef = db.collection('purchases').doc(purchaseId);
+                const purchaseDoc = await purchaseRef.get();
+                const pData = purchaseDoc.data();
+                const orderRef = db.collection('orders').doc(pData.orderId);
+                const buyerRef = db.collection('users').doc(pData.buyerId);
+                
+                await db.runTransaction(async (transaction) => {
+                    const bDoc = await transaction.get(buyerRef);
+                    const buyerFrozen = bDoc.data().frozenBalance || 0;
+                    const buyerBalance = bDoc.data().balance || 0;
+                    
+                    transaction.update(buyerRef, {
+                        frozenBalance: buyerFrozen - pData.rubAmount,
+                        balance: buyerBalance + pData.rubAmount
+                    });
+                    transaction.update(orderRef, { status: 'pending' });
+                    transaction.delete(purchaseRef);
+                });
+                
+                if (tg) tg.showAlert('❌ Сделка отменена, средства возвращены на ваш баланс!');
+                await loadUserData();
+                switchTab('myPurchases');
+            } catch (err) {
+                if (tg) tg.showAlert(`❌ Не удалось отменить: ${err}`);
+            }
+        }
+        
+        function renderMyPurchases() {
+            if (!isScup && !isTrustedScup && !isAdmin) {
+                switchTab('home');
+                return;
+            }
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">УПРАВЛЕНИЕ ХОЛДОМ</div>
+                <div class="page-subtitle">Купленные вами лоты (зажмите старую сделку для удаления из истории)</div>
+                <div id="myPurchasesList"></div>
+            `;
+            const container = document.getElementById('myPurchasesList');
+            const myHoldAndBought = purchaseOrders;
+            
+            if (myHoldAndBought.length === 0) {
+                container.innerHTML = '<div class="empty-state">У вас пока нет покупок</div>';
+            } else {
+                container.innerHTML = myHoldAndBought.map(purchase => {
+                    const isHold = purchase.status === 'on_hold';
+                    return `
+                        <div class="purchase-card" style="text-align:left;" data-id="${purchase.id}" data-status="${purchase.status}" id="purchase_card_${purchase.id}">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                                <div>
+                                    <div style="font-weight:bold;font-size:15px;color:var(--success);">Лот #${purchase.id ? (purchase.id.split('_')[1] || purchase.id) : '---'}</div>
+                                    <div class="lot-items-list" style="margin:6px 0;">
+                                        ${(purchase.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity}`).join('<br>')}
+                                    </div>
+                                    <div style="font-size:12px;color:var(--text-secondary)">Продавец: @${purchase.seller}</div>
+                                    <div style="font-size:13px;font-weight:bold;margin-top:6px">Сумма: ${purchase.rubAmount?.toFixed(0)} ₽ ($${purchase.totalUsd?.toFixed(2)})</div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="font-size:11px;color:var(--text-secondary)">${new Date(purchase.date).toLocaleDateString()}</div>
+                                    <div style="font-size:12px;font-weight:bold;margin-top:4px;" class="${isHold ? 'status-pending' : 'status-completed'}">
+                                        ${isHold ? '🔒 В УДЕРЖАНИИ' : '✅ ЗАВЕРШЕНА'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="cookie-display" style="margin-top:12px">
+                                <code style="font-size:10px;word-break:break-all">${escapeHtml(purchase.cookie)}</code>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:10px;">
+                                <button class="copy-btn" style="margin-top:0;flex:1;" onclick="copyToClipboard('${escapeHtml(purchase.cookie).replace(/'/g, "\\'")}')">📋 Копировать куку</button>
+                                ${isHold ? `
+                                    <button class="btn btn-success" style="flex:1.2;font-size:11px;padding:6px;" onclick="confirmEscrowPurchase('${purchase.id}')">Confirm</button>
+                                    <button class="btn btn-danger" style="flex:0.8;font-size:11px;padding:6px;" onclick="cancelEscrowPurchase('${purchase.id}')">Отменить</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Подключение Long Press к истории холдов (только для завершенных 'completed')
+                myHoldAndBought.forEach(purchase => {
+                    const el = document.getElementById(`purchase_card_${purchase.id}`);
+                    if (el && purchase.status === 'completed') {
+                        initLongPress(el, (e) => {
+                            showContextMenu(e, '🗑️ Удалить из истории холдов', () => deleteOldPurchase(purchase.id));
+                        });
+                    }
+                });
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            if (tg) tg.showAlert('✅ Кука скопирована');
+        }
+        
+        function renderProfile() {
+            const completedDeals = purchaseOrders.filter(p => p.status === 'completed').length;
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">ПРОФИЛЬ</div>
+                <div class="page-subtitle">Ваш аккаунт в RobloMarket</div>
+                <div style="background:var(--card-bg); border-radius:24px; padding:24px; border:1px solid var(--border); text-align:center; box-shadow:var(--shadow)">
+                    <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); display:flex; align-items:center; justify-content:center; font-size:36px; color:white; margin:0 auto 16px">👤</div>
+                    <h2 style="margin-bottom:4px">@${escapeHtml(currentUser?.username || 'Пользователь')}</h2>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px">ID: ${currentUser?.id || '---'}</div>
+                    <div style="display:flex; justify-content:space-around; border-top:1px solid var(--border); padding-top:16px; margin-top:16px">
+                        <div><div style="font-size:20px; font-weight:bold; color:var(--success)">${balance.toFixed(0)} ₽</div><div style="font-size:11px; color:var(--text-secondary)">Баланс</div></div>
+                        <div><div style="font-size:20px; font-weight:bold; color:var(--warning)">${frozenBalance.toFixed(0)} ₽</div><div style="font-size:11px; color:var(--text-secondary)">В холде</div></div>
+                        <div><div style="font-size:20px; font-weight:bold; color:var(--primary)">${completedDeals}</div><div style="font-size:11px; color:var(--text-secondary)">Сделок</div></div>
+                    </div>
+                    <div style="margin-top:20px; font-size:13px; text-align:left; background:var(--input-bg); padding:12px; border-radius:12px;">
+                        <strong>Статус аккаунта:</strong> 
+                        ${isAdmin ? '👑 Главный Администратор' : isTrustedScup ? '⭐️ Доверенный Скупщик (6%)' : isScup ? '✅ Скупщик (7%)' : '👤 Обычный Продавец (7%)'}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderFinances() {
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">ФИНАНСЫ И ВЫПЛАТЫ</div>
+                <div class="page-subtitle">Пополнение баланса и заказ выплат</div>
+                <div class="balance-card">
+                    <div style="font-size:14px; opacity:0.9">ДОСТУПНЫЙ БАЛАНС</div>
+                    <div class="balance-amount">${balance.toFixed(0)} ₽</div>
+                    <div style="font-size:14px; opacity:0.8">~ ${(balance / exchangeRate).toFixed(2)} USDT</div>
+                </div>
+                ${frozenBalance > 0 ? `<div class="frozen-card"><div style="font-weight:bold;color:var(--warning)">🔒 ЗАМОРОЖЕНО В ХОЛДЕ: ${frozenBalance.toFixed(0)} ₽</div><div style="font-size:11px;color:var(--text-secondary)">Средства удерживаются до подтверждения валидности скупщиком.</div></div>` : ''}
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                    <button class="btn btn-success" onclick="showDepositModal()">➕ ПОПОЛНИТЬ</button>
+                    <button class="btn" style="background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border)" onclick="showWithdrawModal()">💸 ВЫВЕСТИ</button>
+                </div>
+                <button class="btn" style="background:var(--card-bg); color:var(--text-primary); border:1px solid var(--border); margin-bottom:20px;" onclick="checkInvoiceStatus()">🔄 Проверить зачисление</button>
+                <div class="chart-container"><canvas id="financeDailyChart"></canvas></div>
+                <div class="chart-container"><canvas id="financeMonthlyChart"></canvas></div>
+            `;
+            
+            // Стабильный безопасный рендер графиков Chart.js для финансов
+            setTimeout(() => {
+                const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+                
+                const ctx1 = document.getElementById('financeDailyChart')?.getContext('2d');
+                if (ctx1) {
+                    if (financeDailyChartObj) financeDailyChartObj.destroy();
+                    financeDailyChartObj = new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: dayNames,
+                            datasets: [{
+                                label: 'Доход (USDT)',
+                                data: incomeStats.dailyData || [0,0,0,0,0,0,0],
+                                backgroundColor: 'rgba(76, 175, 80, 0.6)',
+                                borderColor: '#4caf50',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+                
+                const ctx2 = document.getElementById('financeMonthlyChart')?.getContext('2d');
+                if (ctx2) {
+                    if (financeMonthlyChartObj) financeMonthlyChartObj.destroy();
+                    financeMonthlyChartObj = new Chart(ctx2, {
+                        type: 'line',
+                        data: {
+                            labels: monthNames,
+                            datasets: [{
+                                label: 'Доход (USDT)',
+                                data: incomeStats.monthlyData || [0,0,0,0,0,0,0,0,0,0,0,0],
+                                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                                borderColor: '#4caf50',
+                                borderWidth: 2,
+                                fill: true
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+            }, 60);
+        }
+        
+        function showDepositModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `<div class="modal-content">
+                <h3>➕ Пополнение баланса</h3>
+                <p style="font-size:12px; color:var(--text-secondary); margin:8px 0 16px">Оплата криптовалютой через CryptoBot в эквиваленте USDT</p>
+                <input type="number" id="depAmount" class="search-input" placeholder="Сумма в USDT (мин. 1)">
+                <button class="btn btn-success" style="margin-bottom:8px" onclick="confirmDeposit()">💳 СОЗДАТЬ СЧЕТ</button>
+                <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+        
+        function confirmDeposit() {
+            const amount = parseFloat(document.getElementById('depAmount')?.value);
+            closeModal();
+            deposit(amount);
+        }
+        
+        function showWithdrawModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `<div class="modal-content">
+                <h3>💸 Заявка на вывод</h3>
+                <p style="font-size:12px; color:var(--text-secondary); margin:8px 0 16px">Вывод производится вручную администрацией на ваш кошелек</p>
+                <input type="number" id="withAmount" class="search-input" placeholder="Сумма в USDT (мин. 10)">
+                <input type="text" id="withTarget" class="search-input" placeholder="Ваш Telegram ID или реквизиты">
+                <button class="btn btn-success" style="margin-bottom:8px" onclick="confirmWithdraw()">📝 ОТПРАВИТЬ ЗАЯВКУ</button>
+                <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+        
+        async function confirmWithdraw() {
+            const amount = parseFloat(document.getElementById('withAmount')?.value);
+            const tgId = document.getElementById('withTarget')?.value;
+            if (isNaN(amount) || amount < 10) {
+                if (tg) tg.showAlert('❌ Минимальная сумма вывода: 10 USDT');
+                return;
+            }
+            if ((amount * exchangeRate) > balance) {
+                if (tg) tg.showAlert('❌ Недостаточно средств на балансе');
+                return;
+            }
+            if (!tgId) {
+                if (tg) tg.showAlert('❌ Укажите реквизиты получателя');
+                return;
+            }
+            closeModal();
+            await requestWithdraw(amount, tgId);
+        }
+        
+        function renderSupport() {
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">ТЕХПОДДЕРЖКА</div>
+                <div class="page-subtitle">Связь с администрацией маркетплейса</div>
+                <div style="background:var(--card-bg); border-radius:24px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow)">
+                    <label style="font-weight:bold; font-size:14px; display:block; margin-bottom:8px">Опишите вашу проблему или вопрос:</label>
+                    <textarea id="supportText" class="search-input" style="height:120px; border-radius:16px; font-size:14px; padding:12px;" placeholder="Здравствуйте, у меня вопрос по поводу холда лота..."></textarea>
+                    <button class="btn" onclick="sendSupportRequest()">🚀 ОТПРАВИТЬ ОБРАЩЕНИЕ</button>
+                </div>
+            `;
+        }
+        
+        function closeModal() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        }
+
+        // ==================== PANELS ADMIN ====================
+        async function renderModerka() {
+            if (!isAdmin) {
+                switchTab('home');
+                return;
+            }
+            let supportTickets = [];
+            let pendingWithdrawals = [];
+            if (db) {
+                try {
+                    const supportSnapshot = await db.collection('supportTickets').where('status', '==', 'open').get();
+                    supportSnapshot.forEach(doc => supportTickets.push({ id: doc.id, ...doc.data() }));
+                } catch(e) { console.error(e); }
+                try {
+                    const withdrawSnapshot = await db.collection('withdrawals').where('status', '==', 'pending').get();
+                    withdrawSnapshot.forEach(doc => pendingWithdrawals.push({ id: doc.id, ...doc.data() }));
+                } catch(e) { console.error(e); }
+            }
+            
+            document.getElementById('content').innerHTML = `
+                <div class="page-title">МОДЕРКА</div>
+                <div class="page-subtitle">Панель администратора</div>
+                <div style="background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius:20px; padding:20px; margin-bottom:20px; color:white">
+                    <div style="font-size:14px; opacity:0.9">💰 ОБЩИЙ ДОХОД МАРКЕТА</div>
+                    <div style="font-size:36px; font-weight:bold; margin:10px 0">$${incomeStats.allTime.toFixed(2)}</div>
+                </div>
+                
+                <div class="stats-cards">
+                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.day.toFixed(2)}</div><div class="stat-label-big">СЕГОДНЯ</div></div>
+                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.week.toFixed(2)}</div><div class="stat-label-big">НЕДЕЛЯ</div></div>
+                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.month.toFixed(2)}</div><div class="stat-label-big">МЕСЯЦ</div></div>
+                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.year.toFixed(2)}</div><div class="stat-label-big">ГОД</div></div>
+                </div>
+                
+                <div class="chart-container"><canvas id="adminDailyChart"></canvas></div>
+                <div class="chart-container"><canvas id="adminMonthlyChart"></canvas></div>
+                
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
+                    <div style="font-weight:bold; margin-bottom:16px">💸 ЗАЯВКИ НА РУЧНОЙ ВЫВОД (${pendingWithdrawals.length})</div>
+                    ${pendingWithdrawals.length === 0 ? '<div class="empty-state">Нет активных заявок на выплату</div>' : pendingWithdrawals.map(w => `
+                        <div class="withdraw-request" style="border-left: 4px solid var(--warning); margin-bottom: 12px; padding: 12px; background: var(--input-bg); border-radius: 12px;">
+                            <div>👤 Скупщик: @${escapeHtml(w.userName || 'unknown')}</div>
+                            <div>Сумма USDT: <strong>$${w.amount}</strong> (${w.rubAmount?.toFixed(0)} ₽)</div>
+                            <div style="font-size:11px; color:var(--text-secondary)">Реквизиты/ID: ${escapeHtml(w.targetTelegramId)}</div>
+                            <div class="withdraw-request-actions">
+                                <button class="btn btn-success" style="padding:6px; font-size:12px;" onclick="approveWithdrawal('${w.id}')">ВЫПЛАЧЕНО</button>
+                                <button class="btn btn-danger" style="padding:6px; font-size:12px;" onclick="rejectWithdrawal('${w.id}')">ОТКЛОНИТЬ</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
+                    <div style="font-weight:bold; margin-bottom:16px">🆘 ТИКЕТЫ ПОДДЕРЖКИ (${supportTickets.length})</div>
+                    ${supportTickets.length === 0 ? '<div class="empty-state">Нет открытых тикетов</div>' : supportTickets.map(t => `
+                        <div style="padding:12px; background:var(--input-bg); border-radius:12px; margin-bottom:12px;">
+                            <div style="font-weight:bold; font-size:13px">От: @${escapeHtml(t.userName)}</div>
+                            <div style="font-size:13px; margin:6px 0;">${escapeHtml(t.text)}</div>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn btn-success" style="padding:6px; font-size:11px;" onclick="openSupportTicketChat('${t.userId}', '${escapeHtml(t.userName)}')">💬 ЧАТ</button>
+                                <button class="btn" style="padding:6px; font-size:11px; background:var(--error)" onclick="closeSupportTicket('${t.id}')">🔒 ЗАКРЫТЬ</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
+                    <div style="font-weight:bold; margin-bottom:16px">⚙️ НАЗНАЧИТЬ СКУПЩИКА</div>
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <input type="text" id="newScupUsername" class="search-input" style="margin-bottom:0;" placeholder="Telegram Username">
+                        <button class="btn btn-success" style="width:auto; white-space:nowrap" onclick="assignScup(document.getElementById('newScupUsername').value, false)">+ СКУП</button>
+                        <button class="btn" style="width:auto; white-space:nowrap; background:linear-gradient(135deg, #ff9800, #ff5722)" onclick="assignScup(document.getElementById('newScupUsername').value, true)">+ ДОВЕРЕННЫЙ</button>
+                    </div>
+                </div>
+                
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
+                    <div style="font-weight:bold; margin-bottom:16px">🏷️ РЕДАКТИРОВАНИЕ ЦЕН ПРЕДМЕТОВ</div>
+                    <div id="productsPriceList" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
+                    <div style="font-weight:bold; margin-bottom:16px">👥 СПИСОК СКУПОВ</div>
+                    <div id="scupsListContainer"></div>
+                </div>
+            `;
+            
+            // Стабильный безопасный рендер графиков Chart.js для админки/модерки
+            setTimeout(() => {
+                const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+                
+                const ctx1 = document.getElementById('adminDailyChart')?.getContext('2d');
+                if (ctx1) {
+                    if (adminDailyChartObj) adminDailyChartObj.destroy();
+                    adminDailyChartObj = new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: dayNames,
+                            datasets: [{
+                                label: 'Доход (USDT)',
+                                data: incomeStats.dailyData || [0,0,0,0,0,0,0],
+                                backgroundColor: 'rgba(76, 175, 80, 0.6)',
+                                borderColor: '#4caf50',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+                
+                const ctx2 = document.getElementById('adminMonthlyChart')?.getContext('2d');
+                if (ctx2) {
+                    if (adminMonthlyChartObj) adminMonthlyChartObj.destroy();
+                    adminMonthlyChartObj = new Chart(ctx2, {
+                        type: 'line',
+                        data: {
+                            labels: monthNames,
+                            datasets: [{
+                                label: 'Доход (USDT)',
+                                data: incomeStats.monthlyData || [0,0,0,0,0,0,0,0,0,0,0,0],
+                                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                                borderColor: '#4caf50',
+                                borderWidth: 2,
+                                fill: true
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+            }, 60);
+
+            const priceContainer = document.getElementById('productsPriceList');
+            if (priceContainer) {
+                priceContainer.innerHTML = allProducts.map(p => `
+                    <div class="price-edit-row">
+                        <div style="font-size:13px; flex:2">${p.name}</div>
+                        <input type="number" id="price_${p.id}" value="${p.priceUsd}" step="0.0001">
+                        <button class="btn" style="width:auto; padding:6px 12px; margin-left:8px;" onclick="updateProductPrice(${p.id})">💾</button>
+                    </div>
+                `).join('');
+            }
+            
+            const scupsContainer = document.getElementById('scupsListContainer');
+            if (scupsList.length === 0) {
+                scupsContainer.innerHTML = '<div class="empty-state">Нет назначенных скупов</div>';
+            } else {
+                scupsContainer.innerHTML = scupsList.map(s => `
+                    <div class="scup-item">
+                        <div class="scup-info">
+                            <span>👤 @${escapeHtml(s.username)}</span>
+                            ${s.type === 'trusted' ? '<span class="scup-badge-verified">⭐️✅ ДОВЕРЕННЫЙ</span>' : '<span class="scup-badge">⭐️ СКУП</span>'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        async function assignScup(username, isTrusted) {
+            if (!isAdmin || !db || !username.trim()) return;
+            const cleanUsername = username.trim().replace('@', '');
+            try {
+                const usersSnapshot = await db.collection('users').where('username', '==', cleanUsername).get();
+                if (usersSnapshot.empty) {
+                    if (tg) tg.showAlert('❌ Пользователь не найден в базе данных бота');
+                    return;
+                }
+                const userId = usersSnapshot.docs[0].id;
+                await db.collection('users').doc(userId).update({
+                    isScup: !isTrusted,
+                    isTrustedScup: isTrusted
+                });
+                if (tg) tg.showAlert(`✅ Пользователь @${cleanUsername} назначен скупщиком!`);
+                await loadUserData();
+                renderModerka();
+            } catch (e) { console.error(e); }
+        }
+
+        // ==================== ROUTING SYSTEM ====================
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.getElementById('userMenu').classList.add('hidden');
+            document.getElementById('floatingBar').classList.add('hidden');
+            
+            // Очищаем старые глобальные фильтры поиска перед переходом
+            if (tabId !== 'sell') {
+                searchQuery = '';
+            }
+            
+            renderTabBar();
+            
+            if (tabId === 'home') renderHome();
+            else if (tabId === 'sell') renderSell();
+            else if (tabId === 'mySales') renderMySales();
+            else if (tabId === 'scupka') renderScupka();
+            else if (tabId === 'myPurchases') renderMyPurchases();
+            else if (tabId === 'profile') renderProfile();
+            else if (tabId === 'finances') renderFinances();
+            else if (tabId === 'support') renderSupport();
+            else if (tabId === 'moderka') renderModerka();
+            else if (tabId === 'chats') renderChatList();
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function renderTabBar() {
+            const tabs = [
+                { id: 'home', label: 'ГЛАВНАЯ', icon: '🏠' },
+                { id: 'sell', label: 'ПРОДАТЬ', icon: '📦' },
+                { id: 'mySales', label: 'МОИ ПРОДАЖИ', icon: '📋' }
+            ];
+            
+            if (isScup || isTrustedScup || isAdmin) {
+                tabs.push({ id: 'scupka', label: 'СКУПКА', icon: '💰' });
+                tabs.push({ id: 'myPurchases', label: 'УПРАВЛЕНИЕ ХОЛДОМ', icon: '🛍️' });
+            }
+            if (isAdmin) {
+                tabs.push({ id: 'moderka', label: 'МОДЕРКА', icon: '⚙️' });
+            }
+            
+            document.getElementById('tabBar').innerHTML = tabs.map(t => `
+                <button class="tab-btn ${currentTab === t.id ? 'active' : ''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">
+                    <span class="tab-icon">${t.icon}</span>
+                    <span>${t.label}</span>
+                </button>
+            `).join('');
+        }
+
+        // ==================== INITIALIZATION ====================
+        loadProductPrices();
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            const tgUser = tg.initDataUnsafe?.user;
+            if (tgUser) {
+                currentUser = {
+                    id: tgUser.id,
+                    first_name: tgUser.first_name,
+                    username: tgUser.username || `user_${tgUser.id}`,
+                    photo_url: tgUser.photo_url
+                };
+                
+                const avatarEl = document.getElementById('avatarBtn');
+                if (avatarEl) {
+                    if (tgUser.photo_url) {
+                        avatarEl.innerHTML = `<img src="${tgUser.photo_url}" style="width:100%;height:100%;object-fit:cover;">`;
+                    } else if (tgUser.first_name) {
+                        avatarEl.textContent = tgUser.first_name.charAt(0).toUpperCase();
+                    }
+                }
+            } else {
+                // Локальные тесты вне Telegram
+                currentUser = { id: "7777777", first_name: "LocalUser", username: "LocalTester" };
+            }
+        } else {
+            currentUser = { id: "7777777", first_name: "LocalUser", username: "LocalTester" };
+        }
+        
+        // Первичная подгрузка данных и автообновление каждые 12 секунд
+        loadUserData().then(() => {
+            switchTab('home');
+        });
+        
+        setInterval(async () => {
+            if (db && currentUser) {
+                try {
+                    const userRef = db.collection('users').doc(currentUser.id.toString());
+                    const doc = await userRef.get();
+                    if (doc.exists) {
+                        balance = doc.data().balance || 0;
+                        frozenBalance = doc.data().frozenBalance || 0;
+                    }
+                    const ordersSnapshot = await db.collection('orders').get();
+                    sellOrders = [];
+                    ordersSnapshot.forEach(doc => sellOrders.push({ id: doc.id, ...doc.data() }));
+                    
+                    const purchasesSnapshot = await db.collection('purchases').where('buyerId', '==', currentUser.id.toString()).get();
+                    purchaseOrders = [];
+                    purchasesSnapshot.forEach(doc => purchaseOrders.push({ id: doc.id, ...doc.data() }));
+                    
+                    updateUnreadChatsBadge();
+                    
+                    // Обновляем текущую вкладку на лету, если это списки
+                    if (currentTab === 'mySales') renderMySales();
+                    else if (currentTab === 'scupka') renderScupka();
+                    else if (currentTab === 'myPurchases') renderMyPurchases();
+                } catch(e) { console.error("Автообновление данных:", e); }
+            }
+        }, 12000);
+        
+        // Навешивание стандартных триггеров интерфейса
+        document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+        document.getElementById('avatarBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('userMenu')?.classList.toggle('hidden');
+        });
+        
+        document.body.addEventListener('click', () => {
+            document.getElementById('userMenu')?.classList.add('hidden');
+        });
+        
+        document.getElementById('profileBtn')?.addEventListener('click', () => { switchTab('profile'); });
+        document.getElementById('financesBtn')?.addEventListener('click', () => { switchTab('finances'); });
+        document.getElementById('supportBtn')?.addEventListener('click', () => { switchTab('support'); });
+        document.getElementById('logoutBtn')?.addEventListener('click', () => { if(tg) tg.close(); });
+        document.getElementById('chatBtn')?.addEventListener('click', () => { switchTab('chats'); });
+        
+        window.switchTab = switchTab;
+        window.setMode = setMode;
+        window.cancelSale = cancelSale;
+        window.buyAsScup = buyAsScup;
+        window.confirmDeposit = confirmDeposit;
+        window.confirmWithdraw = confirmWithdraw;
+        window.closeModal = closeModal;
+        window.showDepositModal = showDepositModal;
+        window.showWithdrawModal = showWithdrawModal;
+        window.assignScup = assignScup;
+        window.copyToClipboard = copyToClipboard;
+        window.updateProductPrice = updateProductPrice;
+        window.openChat = openChat;
+        window.renderChatList = renderChatList;
+        window.closeSupportTicket = closeSupportTicket;
+        window.openSupportTicketChat = openSupportTicketChat;
+        window.checkInvoiceStatus = checkInvoiceStatus;
+        window.confirmEscrowPurchase = confirmEscrowPurchase;
+        window.cancelEscrowPurchase = cancelEscrowPurchase;
+        window.approveWithdrawal = approveWithdrawal;
+        window.rejectWithdrawal = rejectWithdrawal;
+        window.openQuantityModal = openQuantityModal;
+        window.showPriceAndCookieModal = showPriceAndCookieModal;
+        
+        initTheme();
+    </script>
+</body>
+</html>
+
