@@ -68,10 +68,9 @@
             margin: 0 auto;
             min-height: 100vh;
             background: var(--bg);
-            padding-bottom: 85px;
+            padding-bottom: 95px; /* Увеличено, чтобы плашка не перекрывала нижний контент */
         }
 
-        /* Верхняя плашка статична, её нельзя двигать/выделять */
         .header {
             display: flex;
             align-items: center;
@@ -79,15 +78,9 @@
             padding: 14px 18px;
             background: var(--header-bg);
             border-bottom: 1px solid var(--border);
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            max-width: 600px;
-            margin: 0 auto;
-            z-index: 1000;
-            user-select: none;
-            -webkit-user-select: none;
+            z-index: 100;
         }
         
         .logo {
@@ -159,7 +152,6 @@
             box-shadow: var(--shadow);
         }
         
-        /* Улучшенный круглый индикатор уведомлений */
         .unread-badge {
             position: absolute;
             top: -4px;
@@ -170,12 +162,11 @@
             font-weight: bold;
             min-width: 18px;
             height: 18px;
-            border-radius: 50%;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0 4px;
-            box-shadow: 0 2px 6px rgba(211,47,47,0.4);
         }
         
         .avatar {
@@ -195,24 +186,17 @@
             overflow: hidden;
         }
         
-        /* Фиксированная плашка меню, которая не уходит наверх */
         .user-menu {
-            position: fixed;
+            position: absolute;
             top: 65px;
-            right: calc(50% - 280px);
+            right: 16px;
             background: var(--card-bg);
             border-radius: 16px;
             border: 1px solid var(--border);
             overflow: hidden;
-            z-index: 2000;
+            z-index: 200;
             min-width: 190px;
             box-shadow: var(--shadow);
-        }
-        
-        @media (max-width: 600px) {
-            .user-menu {
-                right: 16px;
-            }
         }
         
         .user-menu button {
@@ -245,7 +229,7 @@
             display: flex;
             justify-content: space-around;
             padding: 8px 12px 14px;
-            z-index: 1000;
+            z-index: 100;
             overflow-x: auto;
         }
         
@@ -276,10 +260,8 @@
             font-size: 22px;
         }
         
-        /* Смещение контента из-за fixed шапки */
         .content {
             padding: 16px;
-            margin-top: 68px;
         }
         
         .mode-tabs {
@@ -397,9 +379,10 @@
             user-select: none;
         }
 
+        /* ИСПРАВЛЕНО: Плашка теперь всегда закреплена на экране */
         .floating-bar {
             position: fixed;
-            bottom: 85px;
+            bottom: 75px; /* Находится ровно над таб-баром */
             left: 50%;
             transform: translateX(-50%);
             max-width: 90%;
@@ -412,7 +395,7 @@
             justify-content: center;
             align-items: center;
             gap: 20px;
-            z-index: 99;
+            z-index: 105; /* Больше, чем у header и tab-bar */
             box-shadow: 0 6px 25px rgba(76, 175, 80, 0.5);
         }
         
@@ -444,7 +427,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 3000;
+            z-index: 1000;
             padding: 20px;
         }
         
@@ -661,7 +644,6 @@
             margin-bottom: 8px;
             cursor: pointer;
             border: 1px solid var(--border);
-            transition: all 0.2s ease;
         }
         
         .chat-avatar {
@@ -775,8 +757,6 @@
             padding: 16px;
             margin: 16px 0;
             border: 1px solid var(--border);
-            height: 220px;
-            position: relative;
         }
         
         .cookie-display {
@@ -796,7 +776,6 @@
             margin-bottom: 12px;
             border: 1px solid var(--border);
             position: relative;
-            transition: all 0.2s ease;
         }
         
         .copy-btn {
@@ -870,36 +849,6 @@
             padding-left: 14px;
             text-align: left;
             font-size: 13px;
-        }
-
-        /* Контекстное меню для зажатия */
-        .longpress-menu {
-            position: fixed;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            padding: 6px 0;
-            z-index: 9999;
-            min-width: 150px;
-        }
-        .longpress-menu button {
-            width: 100%;
-            padding: 10px 16px;
-            background: none;
-            border: none;
-            color: var(--error);
-            font-weight: bold;
-            text-align: left;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .longpress-menu button:hover {
-            background: var(--input-bg);
-        }
-        .press-holding {
-            transform: scale(0.97);
-            opacity: 0.8;
         }
     </style>
 </head>
@@ -995,16 +944,9 @@
         let scupsList = [];
         let incomeStats = { day: 0, week: 0, month: 0, year: 0, allTime: 0, dailyData: [0,0,0,0,0,0,0], monthlyData: [0,0,0,0,0,0,0,0,0,0,0,0] };
         
-        // Хранилища для инстансов диаграмм, чтобы они правильно перерисовывались
-        let financeDailyChartObj = null;
-        let financeMonthlyChartObj = null;
-        let adminDailyChartObj = null;
-        let adminMonthlyChartObj = null;
-
         const ADMINS_LIST = ['kllyourself', 'petasishr', 'admin'];
 
-        // ==================== ITEMS ====================
-        // ВСЕМ предметам добавлены полноценные фотографии/иконки
+        // ==================== ITEMS (ИСПРАВЛЕНО И ОБНОВЛЕНО) ====================
         let allProducts = [
             { id: 1, name: "Divalo (Requiem)", priceUsd: 40, mode: "anime", image: "https://i.postimg.cc/zLybVf3H/image.jpg" },
             { id: 2, name: "Shiny Divalo (Requiem)", priceUsd: 400, mode: "anime", image: "https://i.postimg.cc/ZWjpG5q0/image.jpg" },
@@ -1024,7 +966,7 @@
             { id: 16, name: "Shiny Lich King", priceUsd: 8, mode: "anime", image: "https://i.postimg.cc/LY0Mwfcv/image.jpg" },
             { id: 17, name: "Serialized Lich King", priceUsd: 267, mode: "anime", image: "https://i.postimg.cc/9RKFKPBG/image.jpg" },
             { id: 18, name: "Shiny Conqueror vs Invulnerable", priceUsd: 10.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153127-099.YdHpL7" },
-            { id: 19, name: "Shiny Soburo (Contract)", priceUsd: 46.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153130-394.YdHxyB" },
+            { id: 19, name: "Shiny Soburo (Contract)", priceUsd: 46.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153130-394.YdHYcB" },
             { id: 20, name: "Shiny Clatakiri (Mochi)", priceUsd: 6.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153133-713.YdHu6t" },
             { id: 21, name: "Shiny Choy Jong En", priceUsd: 4, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153137-161.YdHcpE" },
             { id: 22, name: "Shiny Isdead (Romantic)", priceUsd: 18.67, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153140-848.YdHnm4" },
@@ -1039,14 +981,10 @@
             { id: 31, name: "Serialized God", priceUsd: 8, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153218-544.YdHxxM" },
             { id: 32, name: "Seban", priceUsd: 8, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153221-963.YdH5qN" },
             { id: 33, name: "Shiny Seban", priceUsd: 40, mode: "anime", image: "https://allwebs.ru/image/IMG-20260519-153225-295.YdH6XX" },
-            { id: 34, name: "Blade Ball RAP", priceUsd: 0.0017, mode: "blade", image: "https://cdn-icons-png.flaticon.com/512/3426/3426189.png" },
-            { id: 35, name: "Blade Ball Tokens", priceUsd: 0.0019, mode: "blade", image: "https://cdn-icons-png.flaticon.com/512/3231/3231730.png" },
-            { id: 36, name: "Pet Simulator 99 Gems (1B)", priceUsd: 0.87, mode: "pet", image: "https://cdn-icons-png.flaticon.com/512/3067/3067272.png" },
-            { id: 37, name: "Pet Simulator 99 RAP (1B)", priceUsd: 0.8, mode: "pet", image: "https://cdn-icons-png.flaticon.com/512/9355/9355707.png" },
-            { id: 38, name: "Anime Vanguards Gems", priceUsd: 0.67, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/616/616490.png" },
-            { id: 39, name: "Anime Vanguards RAP", priceUsd: 0.6, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/1705/1705354.png" },
-            { id: 40, name: "Anime Vanguards Tokens", priceUsd: 0.0016, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/4211/4211151.png" },
-            { id: 41, name: "Anime Vanguards Legendary", priceUsd: 2, mode: "anime", image: "https://cdn-icons-png.flaticon.com/512/10303/10303453.png" }
+            { id: 34, name: "Blade Ball RAP", priceUsd: 0.0017, mode: "blade", image: "https://i.postimg.cc/zX8r5S4P/blade-ball-rap.jpg" },
+            { id: 35, name: "Blade Ball Tokens", priceUsd: 0.0019, mode: "blade", image: "https://i.postimg.cc/3wYfD7mP/blade-ball-tokens.jpg" },
+            { id: 36, name: "Pet Simulator 99 Gems (1B)", priceUsd: 0.87, mode: "pet", image: "https://i.postimg.cc/Y97p473Y/ps99-gems.jpg" },
+            { id: 37, name: "Pet Simulator 99 RAP (1B)", priceUsd: 0.8, mode: "pet", image: "https://i.postimg.cc/bNfRzV98/ps99-rap.jpg" }
         ];
         
         function loadProductPrices() {
@@ -1070,11 +1008,6 @@
             const input = document.getElementById(`price_${productId}`);
             if (!input) return;
             const newPrice = parseFloat(input.value);
-            if (isNaN(newPrice) || newPrice <= 0) {
-                if (tg) tg.showAlert('❌ Введите корректную цену');
-                return;
-            }
-            const productIndex = allProducts.findIndex(p => p.id === productId);
             if (productIndex !== -1) {
                 allProducts[productIndex].priceUsd = newPrice;
                 saveProductPrices();
@@ -1096,144 +1029,7 @@
             if (isScup) return 0.07;
             return 0.07;
         }
-
-        // ==================== ЛОГИКА ЗАЖАТИЯ (LONG PRESS) ====================
-        function initLongPress(element, callback) {
-            let pressTimer;
-            
-            const start = (e) => {
-                if (e.type === 'click' && e.button !== 0) return;
-                element.classList.add('press-holding');
-                pressTimer = setTimeout(() => {
-                    cancel();
-                    callback(e);
-                }, 800);
-            };
-
-            const cancel = () => {
-                clearTimeout(pressTimer);
-                element.classList.remove('press-holding');
-            };
-
-            element.addEventListener('mousedown', start);
-            element.addEventListener('touchstart', start, { passive: true });
-            element.addEventListener('click', cancel);
-            element.addEventListener('mouseout', cancel);
-            element.addEventListener('touchend', cancel);
-            element.addEventListener('touchcancel', cancel);
-        }
-
-        function showContextMenu(e, actionName, actionCallback) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const oldMenu = document.querySelector('.longpress-menu');
-            if (oldMenu) oldMenu.remove();
-
-            const menu = document.createElement('div');
-            menu.className = 'longpress-menu';
-            
-            const btn = document.createElement('button');
-            btn.innerHTML = actionName;
-            btn.onclick = (event) => {
-                event.stopPropagation();
-                actionCallback();
-                menu.remove();
-            };
-            
-            menu.appendChild(btn);
-            document.body.appendChild(menu);
-
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            menu.style.left = `${Math.min(clientX, window.innerWidth - 160)}px`;
-            menu.style.top = `${Math.min(clientY, window.innerHeight - 60)}px`;
-
-            setTimeout(() => {
-                document.addEventListener('click', function closeMenu() {
-                    menu.remove();
-                    document.removeEventListener('click', closeMenu);
-                });
-            }, 10);
-        }
-
-        // ==================== ФУНКЦИИ УДАЛЕНИЯ ПО ЗАЖАТИЮ ====================
-        async function deleteChat(chatId) {
-            if (!db) return;
-            if (confirm('Вы уверены, что хотите удалить этот чат?')) {
-                try {
-                    await db.collection('chats').doc(chatId).delete();
-                    if (tg) tg.showAlert('✅ Чат успешно удален');
-                    renderChatList();
-                    updateUnreadChatsBadge();
-                } catch (e) {
-                    console.error("Ошибка удаления чата:", e);
-                }
-            }
-        }
-
-        async function deleteOldPurchase(purchaseId) {
-            if (!db) return;
-            if (confirm('Удалить эту завершенную покупку из вашей истории холдов?')) {
-                try {
-                    await db.collection('purchases').doc(purchaseId).delete();
-                    if (tg) tg.showAlert('✅ Запись удалена');
-                    // Перезагружаем данные и вкладку
-                    const purchasesSnapshot = await db.collection('purchases').where('buyerId', '==', currentUser.id.toString()).get();
-                    purchaseOrders = [];
-                    purchasesSnapshot.forEach(doc => purchaseOrders.push({ id: doc.id, ...doc.data() }));
-                    renderMyPurchases();
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-
-        async function deleteMySale(orderId, status) {
-            if (!db) return;
-            let msg = status === 'sold' ? 'Удалить запись о проданном лоте из истории?' : 'Вы действительно хотите удалить этот активный лот?';
-            if (confirm(msg)) {
-                try {
-                    await db.collection('orders').doc(orderId).delete();
-                    if (tg) tg.showAlert('✅ Удалено');
-                    const ordersSnapshot = await db.collection('orders').where('sellerId', '==', currentUser.id.toString()).get();
-                    sellOrders = [];
-                    ordersSnapshot.forEach(doc => sellOrders.push({ id: doc.id, ...doc.data() }));
-                    renderMySales();
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-
-        // Подсчет и динамическое суммирование активных чатов на иконке
-        async function updateUnreadChatsBadge() {
-            if (!db || !currentUser) return;
-            try {
-                const snapshot = await db.collection('chats')
-                    .where('participants', 'array-contains', currentUser.id.toString())
-                    .get();
-                
-                let totalUnread = 0;
-                snapshot.forEach(doc => {
-                    if (doc.data().lastMessage) totalUnread += 1; 
-                });
-
-                const badge = document.getElementById('unreadBadge');
-                if (badge) {
-                    if (totalUnread > 0) {
-                        badge.textContent = totalUnread;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
+        
         // ==================== FIREBASE DATA ====================
         async function loadUserData() {
             if (!currentUser || !db) return;
@@ -1265,52 +1061,6 @@
             } catch (e) {
                 console.error("Ошибка загрузки пользователя:", e);
             }
-            try {
-                const ordersSnapshot = await db.collection('orders').get();
-                sellOrders = [];
-                ordersSnapshot.forEach(doc => {
-                    sellOrders.push({ id: doc.id, ...doc.data() });
-                });
-            } catch (e) { console.error(e); }
-            try {
-                const purchasesSnapshot = await db.collection('purchases').where('buyerId', '==', currentUser.id.toString()).get();
-                purchaseOrders = [];
-                purchasesSnapshot.forEach(doc => purchaseOrders.push({ id: doc.id, ...doc.data() }));
-            } catch (e) { console.error(e); }
-            try {
-                const withdrawSnapshot = await db.collection('withdrawals').where('userId', '==', currentUser.id.toString()).get();
-                withdrawals = [];
-                withdrawSnapshot.forEach(doc => withdrawals.push(doc.data()));
-            } catch (e) { console.error(e); }
-            try {
-                const scupsSnapshot = await db.collection('users').where('isScup', '==', true).get();
-                scupsList = [];
-                scupsSnapshot.forEach(doc => scupsList.push(doc.data()));
-                const trustedSnapshot = await db.collection('users').where('isTrustedScup', '==', true).get();
-                trustedSnapshot.forEach(doc => {
-                    if (!scupsList.some(s => s.username === doc.data().username)) {
-                        scupsList.push(doc.data());
-                    }
-                });
-            } catch (e) { console.error(e); }
-            try {
-                const statsDoc = await db.collection('stats').doc('income').get();
-                if (statsDoc.exists) {
-                    incomeStats = { ...incomeStats, ...statsDoc.data() };
-                }
-            } catch (e) { console.error(e); }
-            
-            updateUnreadChatsBadge();
-        }
-        
-        async function saveUserData() {
-            if (!currentUser || !db) return;
-            try {
-                await db.collection('users').doc(currentUser.id.toString()).update({
-                    balance: balance,
-                    frozenBalance: frozenBalance
-                });
-            } catch (e) { console.error(e); }
         }
         
         async function addHistory(type, amount, status, details) {
@@ -1324,7 +1074,9 @@
                     details,
                     date: new Date().toISOString()
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
         
         async function addIncome(amount) {
@@ -1336,15 +1088,15 @@
             incomeStats.month += amount;
             incomeStats.week += amount;
             incomeStats.day += amount;
-            if(!incomeStats.dailyData) incomeStats.dailyData = [0,0,0,0,0,0,0];
-            if(!incomeStats.monthlyData) incomeStats.monthlyData = [0,0,0,0,0,0,0,0,0,0,0,0];
             incomeStats.dailyData[dayOfWeek] += amount;
             incomeStats.monthlyData[month] += amount;
             if (db) {
                 try {
                     const statsRef = db.collection('stats').doc('income');
                     await statsRef.set(incomeStats, { merge: true });
-                } catch (e) { console.error(e); }
+                } catch (e) {
+                    console.error(e);
+                }
             }
         }
         
@@ -1387,51 +1139,32 @@
         }
         
         async function checkInvoiceStatus() {
-            if (!currentUser) return;
-            if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
-            try {
-                const response = await fetch(`https://roblomarket-backend32.onrender.com/api/check-payment?userId=${currentUser.id}`);
-                const data = await response.json();
-                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
-                if (data.success) {
-                    if (tg) tg.showAlert(`🎉 Баланс успешно пополнен на ${data.receivedRub.toFixed(2)} рублей!`);
-                    await loadUserData();
-                    if (currentTab === 'finances') renderFinances();
-                } else {
-                    if (tg) tg.showAlert(data.message || 'Новых оплаченных счетов не найдено.');
-                }
-            } catch (e) {
-                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
-                console.error(e);
-                if (tg) tg.showAlert('Ошибка проверки платежа.');
-            }
+            // Заглушка проверки статуса
         }
-
+        
         // ==================== CHAT SYSTEM ====================
-        function escapeHtml(str) {
-            if(!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        function escapeHtml(string) {
+            return String(string).replace(/[&<>"']/g, function (s) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s];
+            });
         }
-
+        
         async function createOrGetChat(targetUserId, targetUserName) {
             if (!currentUser || !db) return null;
             const myId = currentUser.id.toString();
-            const theirId = targetUserId.toString();
-            if (myId === theirId) return null;
+            const peerId = targetUserId.toString();
+            const chatId = myId < peerId ? `${myId}_${peerId}` : `${peerId}_${myId}`;
             try {
-                const q1 = await db.collection('chats').where('participants', '==', [myId, theirId]).get();
-                if (!q1.empty) return q1.docs[0].id;
-                const q2 = await db.collection('chats').where('participants', '==', [theirId, myId]).get();
-                if (!q2.empty) return q2.docs[0].id;
-                
-                const newChatRef = db.collection('chats').doc();
-                const chatId = newChatRef.id;
-                await newChatRef.set({
-                    participants: [myId, theirId],
-                    participantsNames: [currentUser.username || 'User', targetUserName || 'User'],
-                    lastMessage: '',
-                    lastMessageTime: new Date().toISOString()
-                });
+                const chatRef = db.collection('chats').doc(chatId);
+                const chatDoc = await chatRef.get();
+                if (!chatDoc.exists) {
+                    await chatRef.set({
+                        participants: [myId, peerId],
+                        participantsNames: [currentUser.username || 'User', targetUserName || 'User'],
+                        lastMessage: '',
+                        lastMessageTime: new Date().toISOString()
+                    });
+                }
                 return chatId;
             } catch (e) {
                 console.error(e);
@@ -1453,7 +1186,9 @@
                     lastMessage: text.trim(),
                     lastMessageTime: new Date().toISOString()
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
         
         async function loadMessages(chatId, container) {
@@ -1470,7 +1205,9 @@
                     container.appendChild(div);
                 });
                 container.scrollTop = container.scrollHeight;
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
         
         async function renderChatList() {
@@ -1481,101 +1218,57 @@
                 chatsSnapshot.forEach(doc => {
                     chats.push({ id: doc.id, ...doc.data() });
                 });
-                
                 if (chats.length === 0) {
-                    document.getElementById('content').innerHTML = `<div class="page-title">ЧАТЫ</div><div class="empty-state"><div style="font-size:48px">💬</div><div>Нет active-ных чатов</div></div>`;
+                    document.getElementById('content').innerHTML = `<div class="page-title">ЧАТЫ</div><div class="empty-state"><div style="font-size:48px">💬</div><div>Нет активных чатов</div></div>`;
                     return;
                 }
-                
-                document.getElementById('content').innerHTML = `<div class="page-title">ЧАТЫ</div><div class="page-subtitle">Ваши диалоги (зажмите чат для удаления)</div><div id="chatsList"></div>`;
+                document.getElementById('content').innerHTML = `<div class="page-title">ЧАТЫ</div><div class="page-subtitle">Ваши диалоги</div><div id="chatsList"></div>`;
                 const container = document.getElementById('chatsList');
-                
                 container.innerHTML = chats.map(chat => {
-                    const otherName = chat.participantsNames.find(n => n !== currentUser.username) || 'Собеседник';
-                    return `<div class="chat-item" data-id="${chat.id}" id="chat_item_${chat.id}">
-                        <div class="chat-avatar">👤</div>
-                        <div class="chat-info">
-                            <div class="chat-name">@${escapeHtml(otherName)}</div>
-                            <div class="chat-last-message">${escapeHtml(chat.lastMessage) || 'Нет сообщений'}</div>
-                        </div>
-                    </div>`;
+                    const otherName = chat.participantsNames.find(n => n !== currentUser.username) || "Собеседник";
+                    return `<div class="chat-item" onclick="openChat('${chat.id}', '${escapeHtml(otherName)}')"><div class="chat-avatar">💬</div><div class="chat-info"><div class="chat-name">${escapeHtml(otherName)}</div><div class="chat-last-message">${escapeHtml(chat.lastMessage || 'Нет сообщений')}</div></div></div>`;
                 }).join('');
-
-                // Вешаем обработчики зажатия и обычного клика
-                chats.forEach(chat => {
-                    const el = document.getElementById(`chat_item_${chat.id}`);
-                    if (el) {
-                        initLongPress(el, (e) => {
-                            const otherName = chat.participantsNames.find(n => n !== currentUser.username) || 'Собеседник';
-                            showContextMenu(e, `❌ Удалить чат с @${otherName}`, () => deleteChat(chat.id));
-                        });
-                        el.addEventListener('click', (e) => {
-                            if (!el.classList.contains('press-holding')) {
-                                const otherName = chat.participantsNames.find(n => n !== currentUser.username) || 'Собеседник';
-                                openChat(chat.id, otherName);
-                            }
-                        });
-                    }
-                });
-                
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
         
-        function openChat(chatId, targetTitle) {
-            document.getElementById('content').innerHTML = `
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-                    <button class="btn" style="width:auto;padding:8px 16px" onclick="renderChatList()">⬅️ Назад</button>
-                    <div style="font-weight:bold;font-size:18px">@${escapeHtml(targetTitle)}</div>
-                </div>
-                <div class="chat-container">
-                    <div class="chat-messages" id="chatMessages">Загрузка сообщений...</div>
-                    <div class="chat-input-area">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="Введите сообщение...">
-                        <button class="chat-send-btn" id="chatSendBtn">🚀</button>
-                    </div>
-                </div>
-            `;
-            const msgContainer = document.getElementById('chatMessages');
-            loadMessages(chatId, msgContainer);
+        function openChat(chatId, title) {
+            document.getElementById('content').innerHTML = `<div class="page-title">ЧАТ: ${escapeHtml(title)}</div><button class="btn" style="width:auto;margin-bottom:12px;padding:6px 14px;" onclick="renderChatList()">⬅️ К СЛИСКУ</button><div class="chat-container"><div class="chat-messages" id="chatMsgs"></div><div class="chat-input-area"><input type="text" class="chat-input" id="chatInp" placeholder="Напишите сообщение..."><button class="chat-send-btn" id="chatSendBtn">➔</button></div></div>`;
+            const container = document.getElementById('chatMsgs');
+            loadMessages(chatId, container);
             
             const interval = setInterval(() => {
-                if (document.getElementById('chatMessages')) {
-                    loadMessages(chatId, document.getElementById('chatMessages'));
-                } else {
-                    clearInterval(interval);
-                }
+                const check = document.getElementById('chatMsgs');
+                if (check) loadMessages(chatId, check);
+                else clearInterval(interval);
             }, 3000);
             
-            const input = document.getElementById('chatInput');
-            const sendBtn = document.getElementById('chatSendBtn');
-            
-            const doSend = async () => {
-                const txt = input.value;
-                if(!txt.trim()) return;
-                input.value = '';
-                await sendMessage(chatId, txt);
-                loadMessages(chatId, msgContainer);
+            document.getElementById('chatSendBtn').onclick = async () => {
+                const inp = document.getElementById('chatInp');
+                if (!inp.value.trim()) return;
+                await sendMessage(chatId, inp.value);
+                inp.value = '';
+                loadMessages(chatId, container);
             };
-            
-            sendBtn.onclick = doSend;
-            input.onkeydown = (e) => { if(e.key === 'Enter') doSend(); };
         }
-
-        // ==================== SUPPORT SYSTEM ====================
+        
         async function sendSupportRequest() {
-            const txt = document.getElementById('supportText')?.value;
-            if (!txt || !txt.trim() || !db || !currentUser) return;
-            document.getElementById('supportText').value = '';
+            const text = document.getElementById('supportText').value;
+            if (!text.trim() || !currentUser || !db) return;
             try {
                 await db.collection('supportTickets').add({
                     userId: currentUser.id.toString(),
-                    userName: currentUser.username || 'unknown',
-                    text: txt.trim(),
+                    userName: currentUser.username || 'Anon',
+                    text: text.trim(),
                     status: 'open',
                     createdAt: new Date().toISOString()
                 });
                 if (tg) tg.showAlert('✅ Обращение отправлено!');
-            } catch (e) { console.error(e); }
+                switchTab('home');
+            } catch (e) {
+                console.error(e);
+            }
         }
         
         async function openSupportTicketChat(userId, userName) {
@@ -1593,9 +1286,11 @@
                 await db.collection('supportTickets').doc(ticketId).update({ status: 'closed' });
                 if (tg) tg.showAlert('✅ Тикет закрыт');
                 renderModerka();
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
-
+        
         // ==================== FINANCIAL OPERATIONS ====================
         async function deposit(amountUsd) {
             if (!amountUsd || amountUsd < 1) {
@@ -1606,7 +1301,7 @@
             const invoice = await createCryptoBotInvoice(amountUsd);
             if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
             if (!invoice) {
-                if (tg) tg.showAlert('❌ Не удалось создать счет. Проверьте настройки токена в Render.');
+                if (tg) tg.showAlert('❌ Не удалось создать счет.');
             }
         }
         
@@ -1638,49 +1333,41 @@
                 
                 const modal = document.createElement('div');
                 modal.className = 'modal';
-                modal.innerHTML = `<div class="modal-content">
-                    <h3>✅ Заявка создана!</h3>
-                    <p style="margin:12px 0; font-size:14px;">Ваша заявка на сумму <strong>$${amountUsd} USDT</strong> успешно отправлена администраторам. Выплата будет произведена вручную после проверки.</p>
-                    <button class="btn" onclick="closeModal(); switchTab('home');">ОТЛИЧНО</button>
-                </div>`;
+                modal.innerHTML = `<div class="modal-content"><h3>✅ Заявка создана!</h3><p style="margin:12px 0; font-size:14px;">Ваша заявка на сумму <strong>$${amountUsd} USDT</strong> успешно отправлена администраторам.</p><button class="btn" onclick="closeModal()">ОТЛИЧНО</button></div>`;
                 document.body.appendChild(modal);
-            } catch (e) { console.error(e); }
+                switchTab('finances');
+            } catch (e) {
+                console.error(e);
+            }
         }
         
         async function approveWithdrawal(wId) {
             if (!isAdmin || !db) return;
             try {
-                const ref = db.collection('withdrawals').doc(wId);
-                await ref.update({ status: 'completed' });
-                if (tg) tg.showAlert('✅ Выплата подтверждена!');
+                await db.collection('withdrawals').doc(wId).update({ status: 'completed' });
+                if (tg) tg.showAlert('✅ Выплата подтверждена');
                 renderModerka();
             } catch (e) {
                 console.error(e);
-                if (tg) tg.showAlert('❌ Ошибка при подтверждении');
             }
         }
         
         async function rejectWithdrawal(wId) {
             if (!isAdmin || !db) return;
             try {
-                const ref = db.collection('withdrawals').doc(wId);
-                const doc = await ref.get();
-                const wData = doc.data();
-                
-                const userRef = db.collection('users').doc(wData.userId);
-                const uDoc = await userRef.get();
-                const currentBal = uDoc.data().balance || 0;
-                
-                await db.runTransaction(async (transaction) => {
-                    transaction.update(userRef, { balance: currentBal + wData.rubAmount });
-                    transaction.update(ref, { status: 'rejected' });
-                });
-                
+                const wDoc = await db.collection('withdrawals').doc(wId).get();
+                const wData = wDoc.data();
+                await db.collection('withdrawals').doc(wId).update({ status: 'rejected' });
+                const uRef = db.collection('users').doc(wData.userId);
+                const uDoc = await uRef.get();
+                if (uDoc.exists) {
+                    const curBal = uDoc.data().balance || 0;
+                    await uRef.update({ balance: curBal + wData.rubAmount });
+                }
                 if (tg) tg.showAlert('❌ Выплата отклонена, средства возвращены');
                 renderModerka();
             } catch (e) {
                 console.error(e);
-                if (tg) tg.showAlert('❌ Ошибка при отклонении');
             }
         }
         
@@ -1696,7 +1383,7 @@
                 floatingBar.classList.add('hidden');
             }
         }
-
+        
         // ==================== RENDERING TABS ====================
         function renderHome() {
             document.getElementById('content').innerHTML = `
@@ -1707,125 +1394,77 @@
                     <div class="stat-card"><div class="stat-value">ПОКУПАЙТЕ</div><div class="stat-label">Скупайте предметы через CryptoBot</div></div>
                     <div class="stat-card"><div class="stat-value">БЕЗОПАСНОСТЬ</div><div class="stat-label">Все сделки защищены</div></div>
                 </div>
-                <div class="exchange-rate" id="updateRateBtn">💱 Текущий курс: 1 USDT = <span id="exchangeRateValue">${exchangeRate.toFixed(2)}</span> RUB (нажмите для обновления)</div>
+                <div class="exchange-rate" id="updateRateBtn">💱 Текущий курс: 1 USDT = <span id="exchangeRateValue">${exchangeRate.toFixed(2)}</span> RUB</div>
                 <div style="background:var(--card-bg); border-radius:20px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow)">
                     <div style="font-weight:bold; margin-bottom:12px">📘 Как это работает?</div>
                     <div style="margin-bottom:12px"><div style="font-weight:bold">1. Продавец выставляет предметы</div><div style="font-size:12px; color:var(--text-secondary)">Выбирает один или несколько товаров, которые идут в один общий лот.</div></div>
                     <div style="margin-bottom:12px"><div style="font-weight:bold">2. Скуп покупает лот (Холд)</div><div style="font-size:12px; color:var(--text-secondary)">Оплачивает балансом, средства замораживаются. Скуп проверяет куки.</div></div>
-                    <div><div style="font-weight:bold">3. Завершение или Отмена</div><div style="font-size:12px; color:var(--text-secondary)">После успешной проверки скуп нажимает "Confirm" и средства уходят продавцу. Если кука невалид - отмена.</div></div>
+                    <div><div style="font-weight:bold">3. Завершение или Отмена</div><div style="font-size:12px; color:var(--text-secondary)">Если кука валид, скуп завершает сделку (холд спадает продавцу). Если невалид — отменяет.</div></div>
                 </div>
             `;
-            
-            document.getElementById('updateRateBtn').onclick = async () => {
-                if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
-                try {
-                    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
-                    const data = await res.json();
-                    if(data.tether?.rub) {
-                        exchangeRate = data.tether.rub;
-                        document.getElementById('exchangeRateValue').textContent = exchangeRate.toFixed(2);
-                        if (tg) tg.showAlert(`✅ Курс обновлен: 1 USDT = ${exchangeRate.toFixed(2)} RUB`);
-                    }
-                } catch(e) {
-                    exchangeRate = 92.5; 
-                    document.getElementById('exchangeRateValue').textContent = exchangeRate.toFixed(2);
-                }
-                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
-            };
         }
         
         function renderSell() {
             let html = `
-                <div class="page-title">ПРОДАЖА ПРЕДМЕТОВ</div>
-                <div class="page-subtitle">Выберите количество предметов для формирования единого лота</div>
+                <div class="page-title">ПРОДАЖА</div>
+                <div class="page-subtitle">Выберите предметы для формирования единого лота продажи</div>
                 <div class="mode-tabs">
                     ${modes.map(m => `<button class="mode-tab ${currentMode === m.id ? 'active' : ''}" onclick="setMode('${m.id}')">${m.icon} ${m.name}</button>`).join('')}
                 </div>
-                <input type="text" class="search-input" id="searchInputObj" placeholder="🔍 Поиск по названию предмета..." value="${escapeHtml(searchQuery)}">
+                <input type="text" class="search-input" id="searchInp" placeholder="🔍 Поиск предмета..." value="${escapeHtml(searchQuery)}">
                 <div class="products-grid">
             `;
             
-            let filtered = allProducts;
-            if (currentMode !== 'all') filtered = filtered.filter(p => p.mode === currentMode);
-            if (searchQuery.trim()) {
-                const q = searchQuery.toLowerCase();
-                filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
-            }
+            const filtered = allProducts.filter(p => {
+                if (currentMode !== 'all' && p.mode !== currentMode) return false;
+                if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                return true;
+            });
             
-            if(filtered.length === 0) {
-                html += `</div><div class="empty-state">Предметы не найдены</div>`;
+            if (filtered.length === 0) {
+                html += `<div class="empty-state" style="grid-column: 1/-1;">Товары не найдены</div>`;
             } else {
-                html += filtered.map(p => {
-                    const selectedItem = sellSelectedProducts.find(s => s.id === p.id);
-                    const isSelected = !!selectedItem;
-                    const rubPrice = p.priceUsd * exchangeRate;
-                    return `
-                        <div class="product-card selectable ${isSelected ? 'selected' : ''}" onclick="openQuantityModal(${p.id})">
+                filtered.forEach(p => {
+                    const sel = sellSelectedProducts.find(s => s.id === p.id);
+                    const isSelected = !!sel;
+                    html += `
+                        <div class="product-card selectable ${isSelected ? 'selected' : ''}" onclick="openSellQuantityModal(${p.id})">
                             ${isSelected ? `<div class="check-mark">✓</div>` : ''}
                             <div class="product-image">
-                                <img src="${p.image || 'https://cdn-icons-png.flaticon.com/512/5969/5969320.png'}" alt="${escapeHtml(p.name)}">
+                                <img src="${p.image || 'https://cdn-icons-png.flaticon.com/512/5969/5969320.png'}" alt="">
                             </div>
                             <div class="product-name">${escapeHtml(p.name)}</div>
-                            <div style="font-size:13px; font-weight:700; color:var(--success)">$${p.priceUsd.toFixed(4)}</div>
-                            <div style="font-size:11px; color:var(--text-secondary)">~ ${rubPrice.toFixed(2)} ₽</div>
-                            ${isSelected ? `<div class="product-quantity">Выбрано: <strong>${selectedItem.quantity} шт</strong></div>` : ''}
+                            <div style="font-size:13px; font-weight:bold; color:var(--success)">$${p.priceUsd.toFixed(4)}</div>
+                            ${isSelected ? `<div class="product-quantity">Выбрано: ${sel.quantity} шт</div>` : ''}
                         </div>
                     `;
-                }).join('') + `</div>`;
+                });
             }
             
+            html += `</div>`;
             document.getElementById('content').innerHTML = html;
-            updateFloatingBarGlobalState();
             
-            const sInput = document.getElementById('searchInputObj');
-            if (sInput) {
-                sInput.oninput = (e) => {
+            const sInp = document.getElementById('searchInp');
+            if (sInp) {
+                sInp.addEventListener('input', (e) => {
                     searchQuery = e.target.value;
-                    let innerFiltered = allProducts;
-                    if (currentMode !== 'all') innerFiltered = innerFiltered.filter(p => p.mode === currentMode);
-                    if (searchQuery.trim()) {
-                        const q = searchQuery.toLowerCase();
-                        innerFiltered = innerFiltered.filter(p => p.name.toLowerCase().includes(q));
-                    }
                     const grid = document.querySelector('.products-grid');
-                    if(grid) {
-                        grid.innerHTML = innerFiltered.map(p => {
-                            const selectedItem = sellSelectedProducts.find(s => s.id === p.id);
-                            const isSelected = !!selectedItem;
-                            const rubPrice = p.priceUsd * exchangeRate;
-                            return `
-                                <div class="product-card selectable ${isSelected ? 'selected' : ''}" onclick="openQuantityModal(${p.id})">
-                                    ${isSelected ? `<div class="check-mark">✓</div>` : ''}
-                                    <div class="product-image">
-                                        <img src="${p.image || 'https://cdn-icons-png.flaticon.com/512/5969/5969320.png'}" alt="${escapeHtml(p.name)}">
-                                    </div>
-                                    <div class="product-name">${escapeHtml(p.name)}</div>
-                                    <div style="font-size:13px; font-weight:700; color:var(--success)">$${p.priceUsd.toFixed(4)}</div>
-                                    <div style="font-size:11px; color:var(--text-secondary)">~ ${rubPrice.toFixed(2)} ₽</div>
-                                    ${isSelected ? `<div class="product-quantity">Выбрано: <strong>${selectedItem.quantity} шт</strong></div>` : ''}
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                };
+                    // Быстрая фильтрация без перерендера табов
+                    renderSell();
+                    const inp = document.getElementById('searchInp');
+                    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+                });
             }
+            updateFloatingBarGlobalState();
         }
         
-        function openQuantityModal(productId) {
-            const currentQuantity = sellSelectedProducts.find(s => s.id === productId)?.quantity;
+        function openSellQuantityModal(productId) {
+            const sel = sellSelectedProducts.find(s => s.id === productId);
+            const currentQuantity = sel ? sel.quantity : 0;
             const product = allProducts.find(p => p.id === productId);
             const modal = document.createElement('div');
             modal.className = 'modal';
-            modal.innerHTML = `<div class="modal-content">
-                <h3 style="margin-bottom:16px">📦 ${escapeHtml(product.name)}</h3>
-                <div class="quantity-control">
-                    <button class="quantity-btn" onclick="changeQuantity(${productId}, -1)">−</button>
-                    <span class="quantity-value" id="qty_${productId}">${currentQuantity || 1}</span>
-                    <button class="quantity-btn" onclick="changeQuantity(${productId}, 1)">+</button>
-                </div>
-                <button class="btn btn-success" style="margin-bottom:8px;margin-top:16px" onclick="confirmSellQuantity(${productId})">✅ ПОДТВЕРДИТЬ</button>
-                <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
-            </div>`;
+            modal.innerHTML = `<div class="modal-content"><h3 style="margin-bottom:16px">📦 ${escapeHtml(product.name)}</h3><div class="quantity-control"><button class="quantity-btn" onclick="changeQuantity(${productId}, -1)">−</button><span class="quantity-value" id="qty_${productId}">${currentQuantity || 1}</span><button class="quantity-btn" onclick="changeQuantity(${productId}, 1)">+</button></div><button class="btn btn-success" style="margin-bottom:8px;margin-top:16px" onclick="confirmSellQuantity(${productId})">✅ ПОДТВЕРДИТЬ</button><button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button></div>`;
             document.body.appendChild(modal);
             
             window.changeQuantity = (id, delta) => {
@@ -1874,92 +1513,82 @@
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
-                <div class="modal-content" style="max-width:440px;">
+                <div class="modal-content">
                     <h3>🚀 СОЗДАНИЕ ОБЩЕГО ЛОТА</h3>
-                    <div style="margin:12px 0; font-size:13px; background:var(--input-bg); padding:10px; border-radius:12px;">
-                        <strong>Состав лота:</strong><br>
+                    <div style="margin:12px 0; font-size:13px; max-height:120px; overflow-y:auto; background:var(--input-bg); padding:10px; border-radius:12px;">
                         ${items.map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.totalUsd.toFixed(2)})`).join('<br>')}
                     </div>
                     <div style="font-size:14px; margin-bottom:12px;">
-                        Общая сумма: <strong>$${totalUsd.toFixed(2)}</strong><br>
-                        Комиссия системы: <strong>${(commissionRate*100).toFixed(0)}% (-$${commission.toFixed(2)})</strong><br>
-                        Вы получите после холда: <strong style="color:var(--success)">$${finalPayoutUsd.toFixed(2)} (~ ${finalPayoutRub.toFixed(0)} ₽)</strong>
+                        Стоимость лота: <strong>$${totalUsd.toFixed(2)}</strong><br>
+                        Комиссия системы (${(commissionRate*100)}%): <strong>$${commission.toFixed(2)}</strong><br>
+                        Вы получите после скупки: <strong style="color:var(--success)">$${finalPayoutUsd.toFixed(2)} (~ ${finalPayoutRub.toFixed(0)} ₽)</strong>
                     </div>
-                    <label style="font-size:12px; font-weight:bold;">Вставьте .ROBLOSECURITY куку:</label>
-                    <textarea id="cookieInput" class="search-input" style="height:80px; border-radius:12px; margin-top:4px; font-size:11px; padding:8px;" placeholder="_|WARNING:-DO-NOT-SHARE-THIS..."></textarea>
-                    <button class="btn btn-success" style="margin-bottom:8px;" onclick="publishSellOrder()">📢 ОПУБЛИКОВАТЬ ЛОТ</button>
+                    <textarea id="cookieInput" style="width:100%; height:80px; padding:10px; background:var(--input-bg); border:1px solid var(--border); border-radius:12px; color:var(--text-primary); font-size:12px; margin-bottom:12px;" placeholder="Вставьте сюда .ROBLOSECURITY куку аккаунта..."></textarea>
+                    <button class="btn btn-success" style="margin-bottom:8px" onclick="submitSellOrder(${totalUsd}, ${commission}, ${finalPayoutUsd})">🚀 ВЫСТАВИТЬ НА ПРОДАЖУ</button>
                     <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
                 </div>
             `;
             document.body.appendChild(modal);
+        }
+        
+        async function submitSellOrder(totalUsd, commissionUsd, payoutUsd) {
+            const cookie = document.getElementById('cookieInput').value;
+            if (!cookie.trim()) {
+                if (tg) tg.showAlert('❌ Введите куку!');
+                return;
+            }
+            if (!currentUser || !db) return;
             
-            window.publishSellOrder = async () => {
-                const cookieStr = document.getElementById('cookieInput').value;
-                if (!cookieStr || cookieStr.trim().length < 50) {
-                    if (tg) tg.showAlert('❌ Введите корректную .ROBLOSECURITY куку!');
-                    return;
-                }
-                if (!db || !currentUser) return;
+            try {
+                const orderId = `ORD_${Date.now()}`;
+                const itemsToSave = sellSelectedProducts.map(s => {
+                    const p = allProducts.find(prod => prod.id === s.id);
+                    return { id: s.id, name: p.name, quantity: s.quantity, priceUsd: p.priceUsd };
+                });
                 
+                await db.collection('orders').doc(orderId).set({
+                    id: orderId,
+                    sellerId: currentUser.id.toString(),
+                    sellerName: currentUser.username || 'User',
+                    items: itemsToSave,
+                    totalUsd,
+                    commissionUsd,
+                    payoutUsd,
+                    cookie: cookie.trim(),
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                });
+                
+                if (tg) tg.showAlert('🚀 Лот успешно выставлен! Ожидайте скупщика.');
+                sellSelectedProducts = [];
                 closeModal();
-                if (tg) tg.showScanlineProgress && tg.showScanlineProgress();
-                try {
-                    const orderId = `LOT_${Date.now()}`;
-                    await db.collection('orders').doc(orderId).set({
-                        id: orderId,
-                        sellerId: currentUser.id.toString(),
-                        sellerName: currentUser.username || 'User',
-                        items: items,
-                        totalUsd: totalUsd,
-                        payoutUsd: finalPayoutUsd,
-                        commissionUsd: commission,
-                        cookie: cookieStr.trim(),
-                        status: 'pending',
-                        createdAt: new Date().toISOString()
-                    });
-                    sellSelectedProducts = [];
-                    if (tg) tg.showAlert('🎉 Лот успешно создан и доступен скупщикам!');
-                    await loadUserData();
-                    switchTab('mySales');
-                } catch(e) {
-                    console.error(e);
-                    if (tg) tg.showAlert('Ошибка сохранения лота');
-                }
-                if (tg) tg.hideScanlineProgress && tg.hideScanlineProgress();
-            };
+                switchTab('mySales');
+            } catch (e) {
+                console.error(e);
+                if (tg) tg.showAlert('❌ Ошибка публикации');
+            }
         }
         
         function renderMySales() {
             const mySales = sellOrders.filter(item => item.sellerId === currentUser?.id.toString());
             document.getElementById('content').innerHTML = `
                 <div class="page-title">МОИ ПРОДАЖИ</div>
-                <div class="page-subtitle">Ваши лоты (зажмите лот для удаления/очистки истории)</div>
+                <div class="page-subtitle">Ваши active-продажи</div>
                 ${mySales.length === 0 ? '<div class="empty-state">У вас нет active-продаж</div>' : `
-                    <div class="products-grid" style="grid-template-columns:1fr;">
-                        ${mySales.map(item => `
-                            <div class="purchase-card" data-id="${item.id}" data-status="${item.status}" id="sale_card_${item.id}">
-                                <div style="font-weight:bold; color:var(--success)">Лот #${item.id ? (item.id.split('_')[1] || item.id) : '---'}</div>
-                                <div class="lot-items-list">
-                                    ${(item.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.priceUsd})`).join('<br>')}
-                                </div>
-                                <div style="margin:8px 0; font-size:14px;">Общая сумма лота: <strong>$${(item.totalUsd || 0).toFixed(2)} (~ ${((item.totalUsd || 0) * exchangeRate).toFixed(0)} ₽)</strong></div>
-                                <div style="font-size:11px;color:var(--text-secondary)">Статус: ${item.status === 'pending' ? '⏳ Ожидает скупа' : item.status === 'on_hold' ? '🔒 В удержании (проверяется)' : '✅ Продан'}</div>
-                                ${item.status === 'pending' ? `<button class="btn" style="margin-top:8px;padding:8px;background:var(--error)" onclick="cancelSale('${item.id}')">❌ ОТМЕНИТЬ ПРОДАЖУ</button>` : ''}
+                <div class="products-grid" style="grid-template-columns:1fr;">
+                    ${mySales.map(item => `
+                        <div class="purchase-card">
+                            <div style="font-weight:bold; color:var(--success)">Лот #${item.id ? (item.id.split('_')[1] || item.id) : '---'}</div>
+                            <div class="lot-items-list">
+                                ${(item.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.priceUsd})`).join('<br>')}
                             </div>
-                        `).join('')}
-                    </div>
-                `}
+                            <div style="margin:8px 0; font-size:14px;">Общая сумма лота: <strong>$${(item.totalUsd || 0).toFixed(2)} (~ ${((item.totalUsd || 0) * exchangeRate).toFixed(0)} ₽)</strong></div>
+                            <div style="font-size:11px;color:var(--text-secondary)">Статус: ${item.status === 'pending' ? '⏳ Ожидает скупа' : item.status === 'on_hold' ? '🔒 В удержании (проверяется)' : '✅ Продан'}</div>
+                            ${item.status === 'pending' ? `<button class="btn" style="margin-top:8px;padding:8px;background:var(--error)" onclick="cancelSale('${item.id}')">❌ ОТМЕНИТЬ ПРОДАЖУ</button>` : ''}
+                        </div>
+                    `).join('')}
+                </div>`}
             `;
-
-            // Подключение Long Press к картам продаж
-            mySales.forEach(item => {
-                const el = document.getElementById(`sale_card_${item.id}`);
-                if (el) {
-                    initLongPress(el, (e) => {
-                        showContextMenu(e, '❌ Удалить/Снять лот', () => deleteMySale(item.id, item.status));
-                    });
-                }
-            });
         }
         
         async function cancelSale(orderId) {
@@ -1968,8 +1597,9 @@
                     await db.collection('orders').doc(orderId).delete();
                     if (tg) tg.showAlert('❌ Объявление отменено');
                     await loadUserData();
-                    renderMySales();
-                } catch(e) { console.error(e); }
+                } catch(e) {
+                    console.error(e);
+                }
             }
         }
         
@@ -1982,48 +1612,48 @@
             document.getElementById('content').innerHTML = `
                 <div class="page-title">СКУПКА</div>
                 <div class="page-subtitle">Доступные лоты для выкупа в холд</div>
-                ${available.length === 0 ? '<div class="empty-state">Нет доступных лотов для скупки</div>' : `
-                    <div class="products-grid" style="grid-template-columns:1fr;">
-                        ${available.map(item => {
-                            const totalWithCommission = item.totalUsd; 
-                            const rubAmount = totalWithCommission * exchangeRate;
-                            return `
-                                <div class="purchase-card" style="text-align:left">
-                                    <div style="font-weight:bold; font-size:15px; color:var(--primary);">📦 Лот #${item.id ? (item.id.split('_')[1] || item.id) : '---'}</div>
-                                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Продавец: @${escapeHtml(item.sellerName)}</div>
-                                    <div class="lot-items-list">
-                                        ${(item.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity} ($${i.priceUsd})`).join('<br>')}
-                                    </div>
-                                    <div style="margin-top:10px; font-size:15px;">К оплате: <strong style="color:var(--success)">${rubAmount.toFixed(0)} ₽ ($${totalWithCommission.toFixed(2)})</strong></div>
-                                    <button class="btn btn-success" style="margin-top:12px; padding:10px;" onclick="buyAsScup('${item.id}', ${rubAmount}, '${item.sellerId}', '${item.sellerName}')">🔒 ВЫКУПИТЬ В ХОЛД</button>
+                ${available.length === 0 ? '<div class="empty-state">Доступных лотов пока нет</div>' : `
+                <div class="products-grid" style="grid-template-columns:1fr;">
+                    ${available.map(item => {
+                        const commissionRate = getCommissionRate();
+                        const totalWithCommission = item.totalUsd;
+                        const rubAmount = totalWithCommission * exchangeRate;
+                        return `
+                            <div class="purchase-card">
+                                <div style="font-weight:bold; color:var(--primary)">Лот #${item.id ? (item.id.split('_')[1] || item.id) : '---'}</div>
+                                <div style="font-size:11px; color:var(--text-secondary)">Продавец: @${escapeHtml(item.sellerName)}</div>
+                                <div class="lot-items-list">
+                                    ${(item.items || []).map(i => `• ${escapeHtml(i.name)} x${i.quantity}`).join('<br>')}
                                 </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `}
+                                <div style="margin:8px 0; font-size:14px;">Цена для вас: <strong style="color:var(--success)">${rubAmount.toFixed(0)} ₽ ($${totalWithCommission.toFixed(2)})</strong></div>
+                                <button class="btn btn-success" style="padding:8px" onclick="buyAsScup('${item.id}', ${rubAmount}, ${totalWithCommission}, '${item.sellerId}', '${escapeHtml(item.sellerName)}')">🔒 ВЫКУПИТЬ В ХОЛД</button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>`}
             `;
         }
         
-        async function buyAsScup(orderId, rubAmount, sellerIdForChat, sellerNameForChat) {
+        async function buyAsScup(orderId, rubAmount, totalWithCommission, sellerIdForChat, sellerNameForChat) {
             if (!db || !currentUser) return;
             if (balance < rubAmount) {
-                if (tg) tg.showAlert(`❌ Недостаточно средств на балансе! Требуется ${rubAmount.toFixed(0)} ₽, у вас ${balance.toFixed(0)} ₽`);
+                if (tg) tg.showAlert('❌ Недостаточно средств на балансе. Пополните в Финансах!');
                 return;
             }
-            if (!confirm(`Выкупить этот лот за ${rubAmount.toFixed(0)} ₽ в удержание (холд)?`)) return;
+            if (!confirm(`Вы уверены, что хотите выкупить лот за ${rubAmount.toFixed(0)} ₽? Средства будут заморожены.`)) return;
             
             try {
-                const orderRef = db.collection('orders').doc(orderId);
                 const buyerRef = db.collection('users').doc(currentUser.id.toString());
+                const orderRef = db.collection('orders').doc(orderId);
                 
                 await db.runTransaction(async (transaction) => {
-                    const orderDoc = await transaction.get(orderRef);
-                    const buyerDoc = await transaction.get(buyerRef);
-                    if (!orderDoc.exists || orderDoc.data().status !== 'pending') throw "Лот уже выкуплен или удален";
+                    const bDoc = await transaction.get(buyerRef);
+                    const oDoc = await transaction.get(orderRef);
                     
-                    const currentBalance = buyerDoc.data().balance || 0;
-                    const currentFrozen = buyerDoc.data().frozenBalance || 0;
-                    if (currentBalance < rubAmount) throw "Недостаточно средств";
+                    if (oDoc.data().status !== 'pending') throw "Лот уже выкуплен или изменен!";
+                    
+                    const currentBalance = bDoc.data().balance || 0;
+                    const currentFrozen = bDoc.data().frozenBalance || 0;
                     
                     transaction.update(orderRef, { status: 'on_hold' });
                     transaction.update(buyerRef, {
@@ -2037,12 +1667,12 @@
                     transaction.set(purchaseRef, {
                         id: purchaseId,
                         orderId: orderId,
-                        items: orderDoc.data().items,
-                        totalUsd: orderDoc.data().totalUsd,
+                        items: oDoc.data().items,
+                        totalUsd: totalWithCommission,
                         rubAmount: rubAmount,
-                        cookie: orderDoc.data().cookie,
-                        sellerId: orderDoc.data().sellerId,
-                        seller: orderDoc.data().sellerName,
+                        cookie: oDoc.data().cookie,
+                        sellerId: oDoc.data().sellerId,
+                        seller: oDoc.data().sellerName,
                         buyerId: currentUser.id.toString(),
                         buyerName: currentUser.username,
                         status: 'on_hold',
@@ -2050,7 +1680,7 @@
                     });
                 });
                 
-                if (tg) tg.showAlert(`🔒 Лот выкуплен в удержание! Средства заморожены до вашей проверки.`);
+                if (tg) tg.showAlert(`🔒 Лот успешно выкуплен в удержание! Средства заморожены.`);
                 if (sellerIdForChat && sellerNameForChat) {
                     await createOrGetChat(sellerIdForChat, sellerNameForChat);
                 }
@@ -2058,12 +1688,12 @@
                 switchTab('myPurchases');
             } catch (error) {
                 if (tg) tg.showAlert(`❌ Ошибка сделки: ${error}`);
+                console.error(error);
             }
         }
         
         async function confirmEscrowPurchase(purchaseId) {
             if (!db) return;
-            if (!confirm('Вы подтверждаете валидность куки лота? Деньги отправятся продавцу.')) return;
             try {
                 const purchaseRef = db.collection('purchases').doc(purchaseId);
                 const purchaseDoc = await purchaseRef.get();
@@ -2077,6 +1707,7 @@
                 await db.runTransaction(async (transaction) => {
                     const bDoc = await transaction.get(buyerRef);
                     const sDoc = await transaction.get(sellerRef);
+                    
                     const buyerFrozen = bDoc.data().frozenBalance || 0;
                     const sellerBalance = sDoc.data().balance || 0;
                     
@@ -2090,23 +1721,23 @@
                 if (tg) tg.showAlert('✅ Сделка завершена! Средства переведены продавцу.');
                 await addIncome(oData.commissionUsd);
                 await loadUserData();
-                switchTab('myPurchases');
             } catch (err) {
-                if (tg) tg.showAlert(`❌ Ошибка: ${err}`);
+                if (tg) tg.showAlert(`❌ Не удалось подтвердить сделку: ${err}`);
             }
         }
         
         async function cancelEscrowPurchase(purchaseId) {
             if (!db) return;
-            if (!confirm('Вы действительно хотите отменить покупку лота и вернуть средства на баланс?')) return;
+            if (!confirm('Вы действительно хотите отменить покупку лота и вернуть средства?')) return;
             try {
                 const purchaseRef = db.collection('purchases').doc(purchaseId);
-                const purchaseDoc = await purchaseRef.get();
-                const pData = purchaseDoc.data();
-                const orderRef = db.collection('orders').doc(pData.orderId);
-                const buyerRef = db.collection('users').doc(pData.buyerId);
-                
                 await db.runTransaction(async (transaction) => {
+                    const purchaseDoc = await transaction.get(purchaseRef);
+                    if (!purchaseDoc.exists) throw "Покупка не найдена";
+                    const pData = purchaseDoc.data();
+                    const orderRef = db.collection('orders').doc(pData.orderId);
+                    const buyerRef = db.collection('users').doc(pData.buyerId);
+                    
                     const bDoc = await transaction.get(buyerRef);
                     const buyerFrozen = bDoc.data().frozenBalance || 0;
                     const buyerBalance = bDoc.data().balance || 0;
@@ -2118,12 +1749,11 @@
                     transaction.update(orderRef, { status: 'pending' });
                     transaction.delete(purchaseRef);
                 });
-                
-                if (tg) tg.showAlert('❌ Сделка отменена, средства возвращены на ваш баланс!');
+                if (tg) tg.showAlert('❌ Покупка отменена, средства возвращены на ваш баланс.');
                 await loadUserData();
-                switchTab('myPurchases');
+                switchTab('scupka');
             } catch (err) {
-                if (tg) tg.showAlert(`❌ Не удалось отменить: ${err}`);
+                if (tg) tg.showAlert(`❌ Ошибка отмены: ${err}`);
             }
         }
         
@@ -2134,8 +1764,8 @@
             }
             document.getElementById('content').innerHTML = `
                 <div class="page-title">УПРАВЛЕНИЕ ХОЛДОМ</div>
-                <div class="page-subtitle">Купленные вами лоты (зажмите старую сделку для удаления из истории)</div>
-                <div id="myPurchasesList"></div>
+                <div class="page-subtitle">Купленные вами лоты</div>
+                <div class="products-grid" id="myPurchasesList" style="grid-template-columns:1fr;"></div>
             `;
             const container = document.getElementById('myPurchasesList');
             const myHoldAndBought = purchaseOrders;
@@ -2146,7 +1776,7 @@
                 container.innerHTML = myHoldAndBought.map(purchase => {
                     const isHold = purchase.status === 'on_hold';
                     return `
-                        <div class="purchase-card" style="text-align:left;" data-id="${purchase.id}" data-status="${purchase.status}" id="purchase_card_${purchase.id}">
+                        <div class="purchase-card" style="text-align:left;">
                             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                                 <div>
                                     <div style="font-weight:bold;font-size:15px;color:var(--success);">Лот #${purchase.id ? (purchase.id.split('_')[1] || purchase.id) : '---'}</div>
@@ -2169,23 +1799,13 @@
                             <div style="display:flex;gap:8px;margin-top:10px;">
                                 <button class="copy-btn" style="margin-top:0;flex:1;" onclick="copyToClipboard('${escapeHtml(purchase.cookie).replace(/'/g, "\\'")}')">📋 Копировать куку</button>
                                 ${isHold ? `
-                                    <button class="btn btn-success" style="flex:1.2;font-size:11px;padding:6px;" onclick="confirmEscrowPurchase('${purchase.id}')">Confirm</button>
+                                    <button class="btn btn-success" style="flex:1.2;font-size:11px;padding:6px;" onclick="confirmEscrowPurchase('${purchase.id}')">Confirm (Выйти с холда)</button>
                                     <button class="btn btn-danger" style="flex:0.8;font-size:11px;padding:6px;" onclick="cancelEscrowPurchase('${purchase.id}')">Отменить</button>
                                 ` : ''}
                             </div>
                         </div>
                     `;
                 }).join('');
-
-                // Подключение Long Press к истории холдов (только для завершенных 'completed')
-                myHoldAndBought.forEach(purchase => {
-                    const el = document.getElementById(`purchase_card_${purchase.id}`);
-                    if (el && purchase.status === 'completed') {
-                        initLongPress(el, (e) => {
-                            showContextMenu(e, '🗑️ Удалить из истории холдов', () => deleteOldPurchase(purchase.id));
-                        });
-                    }
-                });
             }
         }
         
@@ -2195,22 +1815,16 @@
         }
         
         function renderProfile() {
-            const completedDeals = purchaseOrders.filter(p => p.status === 'completed').length;
             document.getElementById('content').innerHTML = `
                 <div class="page-title">ПРОФИЛЬ</div>
-                <div class="page-subtitle">Ваш аккаунт в RobloMarket</div>
-                <div style="background:var(--card-bg); border-radius:24px; padding:24px; border:1px solid var(--border); text-align:center; box-shadow:var(--shadow)">
-                    <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); display:flex; align-items:center; justify-content:center; font-size:36px; color:white; margin:0 auto 16px">👤</div>
-                    <h2 style="margin-bottom:4px">@${escapeHtml(currentUser?.username || 'Пользователь')}</h2>
-                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px">ID: ${currentUser?.id || '---'}</div>
-                    <div style="display:flex; justify-content:space-around; border-top:1px solid var(--border); padding-top:16px; margin-top:16px">
-                        <div><div style="font-size:20px; font-weight:bold; color:var(--success)">${balance.toFixed(0)} ₽</div><div style="font-size:11px; color:var(--text-secondary)">Баланс</div></div>
-                        <div><div style="font-size:20px; font-weight:bold; color:var(--warning)">${frozenBalance.toFixed(0)} ₽</div><div style="font-size:11px; color:var(--text-secondary)">В холде</div></div>
-                        <div><div style="font-size:20px; font-weight:bold; color:var(--primary)">${completedDeals}</div><div style="font-size:11px; color:var(--text-secondary)">Сделок</div></div>
-                    </div>
-                    <div style="margin-top:20px; font-size:13px; text-align:left; background:var(--input-bg); padding:12px; border-radius:12px;">
-                        <strong>Статус аккаунта:</strong> 
-                        ${isAdmin ? '👑 Главный Администратор' : isTrustedScup ? '⭐️ Доверенный Скупщик (6%)' : isScup ? '✅ Скупщик (7%)' : '👤 Обычный Продавец (7%)'}
+                <div class="page-subtitle">Ваш аккаунт в системе</div>
+                <div style="background:var(--card-bg); border-radius:24px; padding:20px; text-align:center; border:1px solid var(--border); box-shadow:var(--shadow)">
+                    <div style="width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); display:flex; align-items:center; justify-content:center; font-size:28px; color:white; margin:0 auto 12px;">👤</div>
+                    <div style="font-weight:bold; font-size:18px; margin-bottom:4px;">@${escapeHtml(currentUser?.username || 'Пользователь')}</div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">ID: ${currentUser?.id || '---'}</div>
+                    <div style="display:flex; justify-content:space-around; border-top:1px solid var(--border); padding-top:16px;">
+                        <div><div style="font-size:18px; font-weight:bold; color:var(--success)">${balance.toFixed(0)} ₽</div><div style="font-size:11px; color:var(--text-secondary)">Баланс</div></div>
+                        <div><div style="font-size:18px; font-weight:bold; color:var(--warning)">${frozenBalance.toFixed(0)} ₽</div><div style="font-size:11px; color:var(--text-secondary)">В холде</div></div>
                     </div>
                 </div>
             `;
@@ -2218,84 +1832,41 @@
         
         function renderFinances() {
             document.getElementById('content').innerHTML = `
-                <div class="page-title">ФИНАНСЫ И ВЫПЛАТЫ</div>
-                <div class="page-subtitle">Пополнение баланса и заказ выплат</div>
+                <div class="page-title">ФИНАНСЫ</div>
+                <div class="page-subtitle">Управление счетом и история выплат</div>
                 <div class="balance-card">
-                    <div style="font-size:14px; opacity:0.9">ДОСТУПНЫЙ БАЛАНС</div>
+                    <div style="font-size:13px; opacity:0.9">ДОСТУПНЫЙ БАЛАНС</div>
                     <div class="balance-amount">${balance.toFixed(0)} ₽</div>
-                    <div style="font-size:14px; opacity:0.8">~ ${(balance / exchangeRate).toFixed(2)} USDT</div>
+                    <div style="font-size:12px; opacity:0.8">В удержании (холд): ${frozenBalance.toFixed(0)} ₽</div>
                 </div>
-                ${frozenBalance > 0 ? `<div class="frozen-card"><div style="font-weight:bold;color:var(--warning)">🔒 ЗАМОРОЖЕНО В ХОЛДЕ: ${frozenBalance.toFixed(0)} ₽</div><div style="font-size:11px;color:var(--text-secondary)">Средства удерживаются до подтверждения валидности скупщиком.</div></div>` : ''}
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-                    <button class="btn btn-success" onclick="showDepositModal()">➕ ПОПОЛНИТЬ</button>
-                    <button class="btn" style="background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border)" onclick="showWithdrawModal()">💸 ВЫВЕСТИ</button>
+                <div style="display:flex; gap:12px; margin-bottom:20px;">
+                    <button class="btn btn-success" style="padding:14px" onclick="showDepositModal()">➕ ПОПОЛНИТЬ</button>
+                    <button class="btn" style="padding:14px; background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border);" onclick="showWithdrawModal()">💸 ВЫВЕСТИ РУБЛИ</button>
                 </div>
-                <button class="btn" style="background:var(--card-bg); color:var(--text-primary); border:1px solid var(--border); margin-bottom:20px;" onclick="checkInvoiceStatus()">🔄 Проверить зачисление</button>
-                <div class="chart-container"><canvas id="financeDailyChart"></canvas></div>
-                <div class="chart-container"><canvas id="financeMonthlyChart"></canvas></div>
             `;
-            
-            // Стабильный безопасный рендер графиков Chart.js для финансов
-            setTimeout(() => {
-                const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-                const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-                
-                const ctx1 = document.getElementById('financeDailyChart')?.getContext('2d');
-                if (ctx1) {
-                    if (financeDailyChartObj) financeDailyChartObj.destroy();
-                    financeDailyChartObj = new Chart(ctx1, {
-                        type: 'bar',
-                        data: {
-                            labels: dayNames,
-                            datasets: [{
-                                label: 'Доход (USDT)',
-                                data: incomeStats.dailyData || [0,0,0,0,0,0,0],
-                                backgroundColor: 'rgba(76, 175, 80, 0.6)',
-                                borderColor: '#4caf50',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false }
-                    });
-                }
-                
-                const ctx2 = document.getElementById('financeMonthlyChart')?.getContext('2d');
-                if (ctx2) {
-                    if (financeMonthlyChartObj) financeMonthlyChartObj.destroy();
-                    financeMonthlyChartObj = new Chart(ctx2, {
-                        type: 'line',
-                        data: {
-                            labels: monthNames,
-                            datasets: [{
-                                label: 'Доход (USDT)',
-                                data: incomeStats.monthlyData || [0,0,0,0,0,0,0,0,0,0,0,0],
-                                backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                                borderColor: '#4caf50',
-                                borderWidth: 2,
-                                fill: true
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false }
-                    });
-                }
-            }, 60);
         }
         
         function showDepositModal() {
             const modal = document.createElement('div');
             modal.className = 'modal';
-            modal.innerHTML = `<div class="modal-content">
-                <h3>➕ Пополнение баланса</h3>
-                <p style="font-size:12px; color:var(--text-secondary); margin:8px 0 16px">Оплата криптовалютой через CryptoBot в эквиваленте USDT</p>
-                <input type="number" id="depAmount" class="search-input" placeholder="Сумма в USDT (мин. 1)">
-                <button class="btn btn-success" style="margin-bottom:8px" onclick="confirmDeposit()">💳 СОЗДАТЬ СЧЕТ</button>
-                <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
-            </div>`;
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>➕ Пополнение баланса (USDT)</h3>
+                    <p style="font-size:12px; color:var(--text-secondary); margin:8px 0 16px;">Курс зачисления: 1 USDT = ${exchangeRate} RUB. Оплата через CryptoBot.</p>
+                    <input type="number" id="depAmount" class="search-input" style="margin-bottom:16px" placeholder="Сумма в USDT (мин. 1)">
+                    <button class="btn btn-success" style="margin-bottom:8px" onclick="confirmDeposit()">💳 ОПЛАТИТЬ</button>
+                    <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
+                </div>
+            `;
             document.body.appendChild(modal);
         }
         
         function confirmDeposit() {
-            const amount = parseFloat(document.getElementById('depAmount')?.value);
+            const amount = parseFloat(document.getElementById('depAmount').value);
+            if (!amount || amount < 1) {
+                if (tg) tg.showAlert('❌ Введите корректную сумму от 1 USDT');
+                return;
+            }
             closeModal();
             deposit(amount);
         }
@@ -2303,22 +1874,24 @@
         function showWithdrawModal() {
             const modal = document.createElement('div');
             modal.className = 'modal';
-            modal.innerHTML = `<div class="modal-content">
-                <h3>💸 Заявка на вывод</h3>
-                <p style="font-size:12px; color:var(--text-secondary); margin:8px 0 16px">Вывод производится вручную администрацией на ваш кошелек</p>
-                <input type="number" id="withAmount" class="search-input" placeholder="Сумма в USDT (мин. 10)">
-                <input type="text" id="withTarget" class="search-input" placeholder="Ваш Telegram ID или реквизиты">
-                <button class="btn btn-success" style="margin-bottom:8px" onclick="confirmWithdraw()">📝 ОТПРАВИТЬ ЗАЯВКУ</button>
-                <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
-            </div>`;
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>💸 Вывод средств (Ручной)</h3>
+                    <p style="font-size:12px; color:var(--text-secondary); margin:8px 0 16px;">Введите сумму в USDT. Мы переведем рубли по курсу системы. Минималка: 10 USDT (~${10*exchangeRate} ₽).</p>
+                    <input type="number" id="withAmount" class="search-input" style="margin-bottom:12px" placeholder="Сумма в USDT (мин. 10)">
+                    <input type="text" id="targetTgId" class="search-input" style="margin-bottom:16px" placeholder="Ваш Telegram ID или Username">
+                    <button class="btn btn-success" style="margin-bottom:8px" onclick="confirmWithdraw()">💸 ОФОРМИТЬ ВЫВОД</button>
+                    <button class="btn" style="background:var(--input-bg);color:var(--text-primary)" onclick="closeModal()">ОТМЕНА</button>
+                </div>
+            `;
             document.body.appendChild(modal);
         }
         
-        async function confirmWithdraw() {
-            const amount = parseFloat(document.getElementById('withAmount')?.value);
-            const tgId = document.getElementById('withTarget')?.value;
-            if (isNaN(amount) || amount < 10) {
-                if (tg) tg.showAlert('❌ Минимальная сумма вывода: 10 USDT');
+        function confirmWithdraw() {
+            const amount = parseFloat(document.getElementById('withAmount').value);
+            const tgId = document.getElementById('targetTgId').value;
+            if (!amount || amount < 10) {
+                if (tg) tg.showAlert('❌ Минимальная сумма вывода 10 USDT');
                 return;
             }
             if ((amount * exchangeRate) > balance) {
@@ -2326,30 +1899,24 @@
                 return;
             }
             if (!tgId) {
-                if (tg) tg.showAlert('❌ Укажите реквизиты получателя');
+                if (tg) tg.showAlert('❌ Укажите Telegram ID получателя');
                 return;
             }
             closeModal();
-            await requestWithdraw(amount, tgId);
+            requestWithdraw(amount, tgId);
         }
         
         function renderSupport() {
             document.getElementById('content').innerHTML = `
                 <div class="page-title">ТЕХПОДДЕРЖКА</div>
-                <div class="page-subtitle">Связь с администрацией маркетплейса</div>
+                <div class="page-subtitle">Есть вопросы? Напишите нам напрямую!</div>
                 <div style="background:var(--card-bg); border-radius:24px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow)">
-                    <label style="font-weight:bold; font-size:14px; display:block; margin-bottom:8px">Опишите вашу проблему или вопрос:</label>
-                    <textarea id="supportText" class="search-input" style="height:120px; border-radius:16px; font-size:14px; padding:12px;" placeholder="Здравствуйте, у меня вопрос по поводу холда лота..."></textarea>
-                    <button class="btn" onclick="sendSupportRequest()">🚀 ОТПРАВИТЬ ОБРАЩЕНИЕ</button>
+                    <textarea id="supportText" style="width:100%; height:120px; padding:14px; background:var(--input-bg); border:1px solid var(--border); border-radius:16px; color:var(--text-primary); font-size:14px; margin-bottom:16px;" placeholder="Опишите вашу проблему или задайте вопрос подробно..."></textarea>
+                    <button class="btn" onclick="sendSupportRequest()">✉️ ОТПРАВИТЬ ОБРАЩЕНИЕ</button>
                 </div>
             `;
         }
         
-        function closeModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
-
         // ==================== PANELS ADMIN ====================
         async function renderModerka() {
             if (!isAdmin) {
@@ -2377,23 +1944,13 @@
                     <div style="font-size:36px; font-weight:bold; margin:10px 0">$${incomeStats.allTime.toFixed(2)}</div>
                 </div>
                 
-                <div class="stats-cards">
-                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.day.toFixed(2)}</div><div class="stat-label-big">СЕГОДНЯ</div></div>
-                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.week.toFixed(2)}</div><div class="stat-label-big">НЕДЕЛЯ</div></div>
-                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.month.toFixed(2)}</div><div class="stat-label-big">МЕСЯЦ</div></div>
-                    <div class="stat-card-big"><div class="stat-value-big">$${incomeStats.year.toFixed(2)}</div><div class="stat-label-big">ГОД</div></div>
-                </div>
-                
-                <div class="chart-container"><canvas id="adminDailyChart"></canvas></div>
-                <div class="chart-container"><canvas id="adminMonthlyChart"></canvas></div>
-                
                 <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
                     <div style="font-weight:bold; margin-bottom:16px">💸 ЗАЯВКИ НА РУЧНОЙ ВЫВОД (${pendingWithdrawals.length})</div>
-                    ${pendingWithdrawals.length === 0 ? '<div class="empty-state">Нет активных заявок на выплату</div>' : pendingWithdrawals.map(w => `
+                    ${pendingWithdrawals.length === 0 ? '<div class="empty-state">Нет активных заявок</div>' : pendingWithdrawals.map(w => `
                         <div class="withdraw-request" style="border-left: 4px solid var(--warning); margin-bottom: 12px; padding: 12px; background: var(--input-bg); border-radius: 12px;">
-                            <div>👤 Скупщик: @${escapeHtml(w.userName || 'unknown')}</div>
-                            <div>Сумма USDT: <strong>$${w.amount}</strong> (${w.rubAmount?.toFixed(0)} ₽)</div>
-                            <div style="font-size:11px; color:var(--text-secondary)">Реквизиты/ID: ${escapeHtml(w.targetTelegramId)}</div>
+                            <div>👤 Скупщик: @${escapeHtml(w.userName)} (ID: ${w.userId})</div>
+                            <div>Сумма: $${w.amount} USDT (~${w.rubAmount} ₽)</div>
+                            <div>Реквизиты: ${escapeHtml(w.targetTelegramId)}</div>
                             <div class="withdraw-request-actions">
                                 <button class="btn btn-success" style="padding:6px; font-size:12px;" onclick="approveWithdrawal('${w.id}')">ВЫПЛАЧЕНО</button>
                                 <button class="btn btn-danger" style="padding:6px; font-size:12px;" onclick="rejectWithdrawal('${w.id}')">ОТКЛОНИТЬ</button>
@@ -2401,86 +1958,38 @@
                         </div>
                     `).join('')}
                 </div>
-                
+
                 <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
-                    <div style="font-weight:bold; margin-bottom:16px">🆘 ТИКЕТЫ ПОДДЕРЖКИ (${supportTickets.length})</div>
-                    ${supportTickets.length === 0 ? '<div class="empty-state">Нет открытых тикетов</div>' : supportTickets.map(t => `
-                        <div style="padding:12px; background:var(--input-bg); border-radius:12px; margin-bottom:12px;">
-                            <div style="font-weight:bold; font-size:13px">От: @${escapeHtml(t.userName)}</div>
-                            <div style="font-size:13px; margin:6px 0;">${escapeHtml(t.text)}</div>
+                    <div style="font-weight:bold; margin-bottom:16px">🆘 ОТКРЫТЫЕ ТИКЕТЫ ПОДДЕРЖКИ (${supportTickets.length})</div>
+                    ${supportTickets.length === 0 ? '<div class="empty-state">Нет открытых обращений</div>' : supportTickets.map(t => `
+                        <div class="withdraw-request" style="border-left: 4px solid var(--primary); padding:12px; background:var(--input-bg); border-radius:12px; margin-bottom:12px;">
+                            <div style="font-weight:bold">От: @${escapeHtml(t.userName)} (ID: ${t.userId})</div>
+                            <div style="margin:6px 0; font-size:13px; color:var(--text-secondary); white-space:pre-wrap;">${escapeHtml(t.text)}</div>
                             <div style="display:flex; gap:8px;">
-                                <button class="btn btn-success" style="padding:6px; font-size:11px;" onclick="openSupportTicketChat('${t.userId}', '${escapeHtml(t.userName)}')">💬 ЧАТ</button>
-                                <button class="btn" style="padding:6px; font-size:11px; background:var(--error)" onclick="closeSupportTicket('${t.id}')">🔒 ЗАКРЫТЬ</button>
+                                <button class="btn btn-success" style="padding:6px; font-size:12px; flex:1;" onclick="openSupportTicketChat('${t.userId}', '${escapeHtml(t.userName)}')">💬 ОТВЕТИТЬ</button>
+                                <button class="btn btn-danger" style="padding:6px; font-size:12px; flex:1;" onclick="closeSupportTicket('${t.id}')">❌ ЗАКРЫТЬ</button>
                             </div>
                         </div>
                     `).join('')}
                 </div>
+
+                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
+                    <div style="font-weight:bold; margin-bottom:16px">⚙️ УПРАВЛЕНИЕ ЦЕНАМИ ПРЕДМЕТОВ</div>
+                    <div id="productsPriceList" style="max-height:250px; overflow-y:auto;"></div>
+                </div>
                 
                 <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
-                    <div style="font-weight:bold; margin-bottom:16px">⚙️ НАЗНАЧИТЬ СКУПЩИКА</div>
+                    <div style="font-weight:bold; margin-bottom:16px">👥 НАЗНАЧИТЬ СКУПЩИКА</div>
                     <div style="display:flex; gap:8px; margin-bottom:12px;">
-                        <input type="text" id="newScupUsername" class="search-input" style="margin-bottom:0;" placeholder="Telegram Username">
-                        <button class="btn btn-success" style="width:auto; white-space:nowrap" onclick="assignScup(document.getElementById('newScupUsername').value, false)">+ СКУП</button>
-                        <button class="btn" style="width:auto; white-space:nowrap; background:linear-gradient(135deg, #ff9800, #ff5722)" onclick="assignScup(document.getElementById('newScupUsername').value, true)">+ ДОВЕРЕННЫЙ</button>
+                        <input type="text" id="newScupUsername" class="search-input" style="margin-bottom:0;" placeholder="@username">
+                        <button class="btn btn-success" style="width:auto; padding:0 16px;" onclick="assignScup(document.getElementById('newScupUsername').value, false)">+ СКУП</button>
+                        <button class="btn" style="width:auto; padding:0 16px; background:linear-gradient(135deg, #ff9800, #ff5722);" onclick="assignScup(document.getElementById('newScupUsername').value, true)">+ ДОВЕРЕННЫЙ</button>
                     </div>
-                </div>
-                
-                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
-                    <div style="font-weight:bold; margin-bottom:16px">🏷️ РЕДАКТИРОВАНИЕ ЦЕН ПРЕДМЕТОВ</div>
-                    <div id="productsPriceList" style="max-height: 300px; overflow-y: auto;"></div>
-                </div>
-                
-                <div style="background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:20px; border:1px solid var(--border)">
                     <div style="font-weight:bold; margin-bottom:16px">👥 СПИСОК СКУПОВ</div>
                     <div id="scupsListContainer"></div>
                 </div>
             `;
             
-            // Стабильный безопасный рендер графиков Chart.js для админки/модерки
-            setTimeout(() => {
-                const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-                const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-                
-                const ctx1 = document.getElementById('adminDailyChart')?.getContext('2d');
-                if (ctx1) {
-                    if (adminDailyChartObj) adminDailyChartObj.destroy();
-                    adminDailyChartObj = new Chart(ctx1, {
-                        type: 'bar',
-                        data: {
-                            labels: dayNames,
-                            datasets: [{
-                                label: 'Доход (USDT)',
-                                data: incomeStats.dailyData || [0,0,0,0,0,0,0],
-                                backgroundColor: 'rgba(76, 175, 80, 0.6)',
-                                borderColor: '#4caf50',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false }
-                    });
-                }
-                
-                const ctx2 = document.getElementById('adminMonthlyChart')?.getContext('2d');
-                if (ctx2) {
-                    if (adminMonthlyChartObj) adminMonthlyChartObj.destroy();
-                    adminMonthlyChartObj = new Chart(ctx2, {
-                        type: 'line',
-                        data: {
-                            labels: monthNames,
-                            datasets: [{
-                                label: 'Доход (USDT)',
-                                data: incomeStats.monthlyData || [0,0,0,0,0,0,0,0,0,0,0,0],
-                                backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                                borderColor: '#4caf50',
-                                borderWidth: 2,
-                                fill: true
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false }
-                    });
-                }
-            }, 60);
-
             const priceContainer = document.getElementById('productsPriceList');
             if (priceContainer) {
                 priceContainer.innerHTML = allProducts.map(p => `
@@ -2518,27 +2027,28 @@
                 }
                 const userId = usersSnapshot.docs[0].id;
                 await db.collection('users').doc(userId).update({
-                    isScup: !isTrusted,
+                    isScup: true,
                     isTrustedScup: isTrusted
                 });
                 if (tg) tg.showAlert(`✅ Пользователь @${cleanUsername} назначен скупщиком!`);
-                await loadUserData();
-                renderModerka();
-            } catch (e) { console.error(e); }
+                document.getElementById('newScupUsername').value = '';
+                // Перезапуск слушателей Firebase обновит списки
+            } catch (e) {
+                console.error(e);
+            }
         }
 
-        // ==================== ROUTING SYSTEM ====================
+        function closeModal() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(m => m.remove());
+        }
+        
         function switchTab(tabId) {
             currentTab = tabId;
-            document.getElementById('userMenu').classList.add('hidden');
-            document.getElementById('floatingBar').classList.add('hidden');
+            closeModal();
             
-            // Очищаем старые глобальные фильтры поиска перед переходом
-            if (tabId !== 'sell') {
-                searchQuery = '';
-            }
-            
-            renderTabBar();
+            const floatingBar = document.getElementById('floatingBar');
+            if (floatingBar) floatingBar.classList.add('hidden');
             
             if (tabId === 'home') renderHome();
             else if (tabId === 'sell') renderSell();
@@ -2548,22 +2058,22 @@
             else if (tabId === 'profile') renderProfile();
             else if (tabId === 'finances') renderFinances();
             else if (tabId === 'support') renderSupport();
-            else if (tabId === 'moderka') renderModerka();
             else if (tabId === 'chats') renderChatList();
+            else if (tabId === 'moderka') renderModerka();
             
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderTabBar();
         }
         
         function renderTabBar() {
             const tabs = [
                 { id: 'home', label: 'ГЛАВНАЯ', icon: '🏠' },
                 { id: 'sell', label: 'ПРОДАТЬ', icon: '📦' },
-                { id: 'mySales', label: 'МОИ ПРОДАЖИ', icon: '📋' }
+                { id: 'mySales', label: 'МОИ ПРОДАЖИ', icon: '⏳' }
             ];
             
             if (isScup || isTrustedScup || isAdmin) {
                 tabs.push({ id: 'scupka', label: 'СКУПКА', icon: '💰' });
-                tabs.push({ id: 'myPurchases', label: 'УПРАВЛЕНИЕ ХОЛДОМ', icon: '🛍️' });
+                tabs.push({ id: 'myPurchases', label: 'ХОЛД', icon: '🛍️' });
             }
             if (isAdmin) {
                 tabs.push({ id: 'moderka', label: 'МОДЕРКА', icon: '⚙️' });
@@ -2576,7 +2086,7 @@
                 </button>
             `).join('');
         }
-
+        
         // ==================== INITIALIZATION ====================
         loadProductPrices();
         if (tg) {
@@ -2586,75 +2096,96 @@
             if (tgUser) {
                 currentUser = {
                     id: tgUser.id,
-                    first_name: tgUser.first_name,
                     username: tgUser.username || `user_${tgUser.id}`,
-                    photo_url: tgUser.photo_url
+                    first_name: tgUser.first_name
                 };
-                
-                const avatarEl = document.getElementById('avatarBtn');
-                if (avatarEl) {
-                    if (tgUser.photo_url) {
-                        avatarEl.innerHTML = `<img src="${tgUser.photo_url}" style="width:100%;height:100%;object-fit:cover;">`;
-                    } else if (tgUser.first_name) {
-                        avatarEl.textContent = tgUser.first_name.charAt(0).toUpperCase();
-                    }
-                }
+                const av = document.getElementById('avatarBtn');
+                if (av) av.textContent = (tgUser.username || tgUser.first_name || 'U').substring(0, 2).toUpperCase();
             } else {
                 // Локальные тесты вне Telegram
-                currentUser = { id: "7777777", first_name: "LocalUser", username: "LocalTester" };
+                currentUser = { id: 12345, username: "local_test_user", first_name: "Test" };
             }
         } else {
-            currentUser = { id: "7777777", first_name: "LocalUser", username: "LocalTester" };
+            currentUser = { id: 12345, username: "local_test_user", first_name: "Test" };
         }
         
-        // Первичная подгрузка данных и автообновление каждые 12 секунд
-        loadUserData().then(() => {
-            switchTab('home');
-        });
-        
-        setInterval(async () => {
-            if (db && currentUser) {
-                try {
-                    const userRef = db.collection('users').doc(currentUser.id.toString());
-                    const doc = await userRef.get();
-                    if (doc.exists) {
-                        balance = doc.data().balance || 0;
-                        frozenBalance = doc.data().frozenBalance || 0;
-                    }
-                    const ordersSnapshot = await db.collection('orders').get();
-                    sellOrders = [];
-                    ordersSnapshot.forEach(doc => sellOrders.push({ id: doc.id, ...doc.data() }));
-                    
-                    const purchasesSnapshot = await db.collection('purchases').where('buyerId', '==', currentUser.id.toString()).get();
-                    purchaseOrders = [];
-                    purchasesSnapshot.forEach(doc => purchaseOrders.push({ id: doc.id, ...doc.data() }));
-                    
-                    updateUnreadChatsBadge();
-                    
-                    // Обновляем текущую вкладку на лету, если это списки
-                    if (currentTab === 'mySales') renderMySales();
-                    else if (currentTab === 'scupka') renderScupka();
-                    else if (currentTab === 'myPurchases') renderMyPurchases();
-                } catch(e) { console.error("Автообновление данных:", e); }
+        // Настройка слушателей реального времени Firebase
+        async function startFirebaseListeners() {
+            if (!db) {
+                renderHome();
+                renderTabBar();
+                return;
             }
-        }, 12000);
+            
+            await loadUserData();
+            renderHome();
+            renderTabBar();
+            
+            // 1. Слушатель лотов на продажу
+            db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                sellOrders = [];
+                snapshot.forEach(doc => {
+                    sellOrders.push({ id: doc.id, ...doc.data() });
+                });
+                if (currentTab === 'mySales') renderMySales();
+                if (currentTab === 'scupka') renderScupka();
+            });
+            
+            // 2. Слушатель выкупленных лотов (холдов)
+            if (currentUser) {
+                db.collection('purchases')
+                  .where('buyerId', '==', currentUser.id.toString())
+                  .onSnapshot(snapshot => {
+                      purchaseOrders = [];
+                      snapshot.forEach(doc => {
+                          purchaseOrders.push({ id: doc.id, ...doc.data() });
+                      });
+                      if (currentTab === 'myPurchases') renderMyPurchases();
+                  });
+                  
+                // Подгрузка истории выплат самого пользователя
+                db.collection('withdrawals')
+                  .where('userId', '==', currentUser.id.toString())
+                  .orderBy('createdAt', 'desc')
+                  .onSnapshot(snapshot => {
+                      withdrawals = [];
+                      snapshot.forEach(doc => {
+                          withdrawals.push({ id: doc.id, ...doc.data() });
+                      });
+                  });
+            }
+            
+            // 3. Список скупщиков для админки
+            db.collection('users').where('isScup', '==', true).onSnapshot(snapshot => {
+                scupsList = [];
+                snapshot.forEach(doc => {
+                    scupsList.push({ id: doc.id, ...doc.data() });
+                });
+                if (currentTab === 'moderka') renderModerka();
+            });
+            
+            // 4. Статистика админки
+            db.collection('stats').doc('income').onSnapshot(doc => {
+                if (doc.exists) {
+                    incomeStats = { ...incomeStats, ...doc.data() };
+                    if (currentTab === 'moderka') renderModerka();
+                }
+            });
+        }
         
-        // Навешивание стандартных триггеров интерфейса
+        startFirebaseListeners();
+        
+        // Нажатия верхнего меню пользователя
         document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
-        document.getElementById('avatarBtn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
+        document.getElementById('avatarBtn')?.addEventListener('click', () => {
             document.getElementById('userMenu')?.classList.toggle('hidden');
         });
         
-        document.body.addEventListener('click', () => {
-            document.getElementById('userMenu')?.classList.add('hidden');
-        });
-        
-        document.getElementById('profileBtn')?.addEventListener('click', () => { switchTab('profile'); });
-        document.getElementById('financesBtn')?.addEventListener('click', () => { switchTab('finances'); });
-        document.getElementById('supportBtn')?.addEventListener('click', () => { switchTab('support'); });
-        document.getElementById('logoutBtn')?.addEventListener('click', () => { if(tg) tg.close(); });
-        document.getElementById('chatBtn')?.addEventListener('click', () => { switchTab('chats'); });
+        document.getElementById('profileBtn')?.addEventListener('click', () => { document.getElementById('userMenu')?.classList.add('hidden'); switchTab('profile'); });
+        document.getElementById('financesBtn')?.addEventListener('click', () => { document.getElementById('userMenu')?.classList.add('hidden'); switchTab('finances'); });
+        document.getElementById('supportBtn')?.addEventListener('click', () => { document.getElementById('userMenu')?.classList.add('hidden'); switchTab('support'); });
+        document.getElementById('logoutBtn')?.addEventListener('click', () => { document.getElementById('userMenu')?.classList.add('hidden'); if(tg) tg.close(); });
+        document.getElementById('chatBtn')?.addEventListener('click', () => { document.getElementById('userMenu')?.classList.add('hidden'); switchTab('chats'); });
         
         window.switchTab = switchTab;
         window.setMode = setMode;
@@ -2677,11 +2208,9 @@
         window.cancelEscrowPurchase = cancelEscrowPurchase;
         window.approveWithdrawal = approveWithdrawal;
         window.rejectWithdrawal = rejectWithdrawal;
-        window.openQuantityModal = openQuantityModal;
-        window.showPriceAndCookieModal = showPriceAndCookieModal;
+        window.openSellQuantityModal = openSellQuantityModal;
         
         initTheme();
     </script>
 </body>
 </html>
-
